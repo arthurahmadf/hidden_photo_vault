@@ -12,7 +12,7 @@ List<PageLog> pageLogFromJson(String str) => List<PageLog>.from(json.decode(str)
 
 String pageLogToJson(List<PageLog> data) => json.encode(List<dynamic>.from(data.map((x) => x.toJson())));
 
-@HiveType(typeId: 12)
+@HiveType(typeId: 2)
 class PageLog {
   @HiveField(0)
   String? pageId;

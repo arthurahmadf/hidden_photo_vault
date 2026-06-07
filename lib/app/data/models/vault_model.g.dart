@@ -1,38 +1,41 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of 'page_log_model.dart';
+part of 'vault_model.dart';
 
 // **************************************************************************
 // TypeAdapterGenerator
 // **************************************************************************
 
-class PageLogAdapter extends TypeAdapter<PageLog> {
+class VaultAdapter extends TypeAdapter<Vault> {
   @override
-  final int typeId = 2;
+  final int typeId = 3;
 
   @override
-  PageLog read(BinaryReader reader) {
+  Vault read(BinaryReader reader) {
     final numOfFields = reader.readByte();
     final fields = <int, dynamic>{
       for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
     };
-    return PageLog(
-      pageId: fields[0] as String?,
-      userId: fields[1] as int?,
-      openedAt: fields[2] as DateTime?,
+    return Vault(
+      id: fields[0] as String?,
+      name: fields[1] as String?,
+      pinHash: fields[2] as String?,
+      createdAt: fields[3] as DateTime?,
     );
   }
 
   @override
-  void write(BinaryWriter writer, PageLog obj) {
+  void write(BinaryWriter writer, Vault obj) {
     writer
-      ..writeByte(3)
+      ..writeByte(4)
       ..writeByte(0)
-      ..write(obj.pageId)
+      ..write(obj.id)
       ..writeByte(1)
-      ..write(obj.userId)
+      ..write(obj.name)
       ..writeByte(2)
-      ..write(obj.openedAt);
+      ..write(obj.pinHash)
+      ..writeByte(3)
+      ..write(obj.createdAt);
   }
 
   @override
@@ -41,7 +44,7 @@ class PageLogAdapter extends TypeAdapter<PageLog> {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      other is PageLogAdapter &&
+      other is VaultAdapter &&
           runtimeType == other.runtimeType &&
           typeId == other.typeId;
 }

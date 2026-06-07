@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 class AppColors {
   // Primary Colors
-  static const Color primary = Color(0xFF167B60);
+  static const Color primary = Color(0xFF2C5EAD);
   static const Color primary50 = Color(0xFFF3FFFB);
   static const Color primary100 = Color(0xFFD9FFF3);
   static const Color primary500 = Color(0xFF5CD4AC);
@@ -13,16 +13,20 @@ class AppColors {
   static const Color primaryDark = Color(0xFF5E35B1);
   static const Color primaryLight = Color(0xFF4D94FF);
   static const Color gradationEnd = Color.fromARGB(255, 231, 217, 14);
-  
+
   // Secondary Colors
-  static const Color secondary = Color(0xFFBDA700);
+  static const Color secondary = Color(0xFF1591DC);
   static const Color secondary100 = Color(0xFFDDF3FF);
   static const Color secondaryDark = Color(0xFFCC8400);
   static const Color secondaryLight = Color(0xFFFFBF40);
 
+  // Tertiary Colors
+  static const Color tertiary = Color(0xFF4BB8FA);
+  static const Color tertiar2y = Color(0xFFC4E2F5);
+
   // Background Colors
   // static const Color background = Color.fromARGB(255, 241, 241, 241);
-  static const Color background = Color(0xFFF9F9F9);
+  static const Color background = Color.fromARGB(255, 58, 58, 58);
   static const Color backgroundAccent = Color.fromARGB(255, 230, 230, 230);
   static const Color backgroundDark = Color(0xFFE0E0E0);
   static const Color backgroundLight = Color(0xFFFFFFFF);

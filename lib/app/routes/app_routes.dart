@@ -7,10 +7,14 @@ abstract class Routes {
   Routes._();
   static const HOME = _Paths.HOME;
   static const SPLASHSCREEN = _Paths.SPLASHSCREEN;
+  static const FORM_ADD_MEDIA = _Paths.FORM_ADD_MEDIA;
+  static const MEDIA_VIEWER = _Paths.MEDIA_VIEWER;
 }
 
 abstract class _Paths {
   _Paths._();
   static const HOME = '/home';
   static const SPLASHSCREEN = '/splashscreen';
+  static const FORM_ADD_MEDIA = '/form-add-media';
+  static const MEDIA_VIEWER = '/media-viewer';
 }

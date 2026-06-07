@@ -1,7 +1,11 @@
 import 'package:get/get.dart';
 
+import '../modules/form_add_media/bindings/form_add_media_binding.dart';
+import '../modules/form_add_media/views/form_add_media_view.dart';
 import '../modules/home/bindings/home_binding.dart';
 import '../modules/home/views/home_view.dart';
+import '../modules/media_viewer/bindings/media_viewer_binding.dart';
+import '../modules/media_viewer/views/media_viewer_view.dart';
 import '../modules/splashscreen/bindings/splashscreen_binding.dart';
 import '../modules/splashscreen/views/splashscreen_view.dart';
 
@@ -24,6 +28,16 @@ class AppPages {
       name: _Paths.SPLASHSCREEN,
       page: () => const SplashscreenView(),
       binding: SplashscreenBinding(),
+    ),
+    GetPage(
+      name: _Paths.FORM_ADD_MEDIA,
+      page: () => const FormAddMediaView(),
+      binding: FormAddMediaBinding(),
+    ),
+    GetPage(
+      name: _Paths.MEDIA_VIEWER,
+      page: () => const MediaViewerView(),
+      binding: MediaViewerBinding(),
     ),
   ];
 }

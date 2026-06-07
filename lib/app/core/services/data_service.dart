@@ -1,3 +1,5 @@
+import 'package:hidden_photo_vault/app/data/models/gallery_media_model.dart';
+import 'package:hidden_photo_vault/app/data/models/vault_model.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
 import '../models/auth_model.dart';
@@ -33,6 +35,11 @@ class HiveBox<T> {
   /// Return all items as List<T>
   List<T> get list {
     return _box?.values.cast<T>().toList() ?? [];
+  }
+
+  /// Filter all items matching [test].
+  List<T> where(bool Function(T item) test) {
+    return _box?.values.cast<T>().where(test).toList() ?? [];
   }
 
   /// Add new item to list
@@ -78,15 +85,32 @@ class HiveBox<T> {
     await Hive.deleteBoxFromDisk(name);
     _box = null;
   }
+
+  Future<void> put(String key, T value) async {
+    await _box?.put(key, value);
+  }
+
+  T? getById(String key) => _box?.get(key) as T?;
+
+  Future<void> deleteById(String key) async {
+    await _box?.delete(key);
+  }
+
+  Future<void> update(String key, T value) async {
+    await _box?.put(key, value);
+  }
+
+  T? find(bool Function(T item) test) {
+    return _box?.values.cast<T>().firstWhere(test, orElse: () => null as T);
+  }
 }
 
 class DataService {
   static final auth = HiveBox<Auth>('auth');
   static final user = HiveBox<User>('user');
-
-  // nav
   static final pageLog = HiveBox<PageLog>('pageLog');
-  // settings
+  static final gallery = HiveBox<GalleryMedia>('galleryImage');
+  static final vault = HiveBox<Vault>('vault');
 
   // static final user = HiveBox<User>('user'); // add more as needed
 
@@ -97,11 +121,15 @@ class DataService {
     Hive.registerAdapter(AuthAdapter());
     Hive.registerAdapter(UserAdapter());
     Hive.registerAdapter(PageLogAdapter());
+    Hive.registerAdapter(GalleryMediaAdapter());
+    Hive.registerAdapter(VaultAdapter());
 
     // open boxes
     await auth.init();
     await user.init();
     await pageLog.init();
+    await gallery.init();
+    await vault.init();
   }
 
   /// Close all boxes safely
@@ -109,6 +137,8 @@ class DataService {
     await auth.close();
     await user.close();
     await pageLog.close();
+    await gallery.close();
+    await vault.close();
   }
 
   /// Delete all boxes from disk (wipe all persisted data)
@@ -116,5 +146,7 @@ class DataService {
     await auth.deleteBox();
     await user.deleteBox();
     await pageLog.deleteBox();
+    await gallery.deleteBox();
+    await vault.deleteBox();
   }
 }
