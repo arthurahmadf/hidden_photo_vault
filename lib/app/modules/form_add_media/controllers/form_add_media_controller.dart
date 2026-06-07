@@ -17,7 +17,13 @@ class FormAddMediaController extends GetxController {
     if (file == null) return;
     DialogService.showLoading(dismissible: false);
     try {
-      var isSuccess = await gs.insertMedia(file!, mediaType!, homeController.selectedVault.value.id ?? "public");
+      var key = homeController.selectedVaultPin ?? "public";
+      var isSuccess = await gs.insertMedia(
+        file!,
+        mediaType!,
+        homeController.selectedVault.value.id ?? "public",
+        encryptionKey: key,
+      );
       if (isSuccess) {
         closeDialog();
         Get.back(result: true);

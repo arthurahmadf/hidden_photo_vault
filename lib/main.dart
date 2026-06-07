@@ -32,7 +32,7 @@ void main() async {
         return FlavorBanner(
           flavor: flavor.name,
           child: GetMaterialApp(
-            title: "Smart Hijrah",
+            title: "mY Gallery",
             initialRoute: AppPages.INITIAL,
             locale: const Locale('id', 'ID'),
             fallbackLocale: const Locale('id', 'ID'),

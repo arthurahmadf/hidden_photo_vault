@@ -13,6 +13,8 @@ import 'package:hidden_photo_vault/app/routes/app_pages.dart';
 
 class HomeController extends GetxController with WidgetsBindingObserver {
   final GalleryService gs = GalleryService();
+  String get activeEncKey =>
+      selectedVault.value.id == 'public' ? GalleryService.publicKey : selectedVaultPin ?? GalleryService.publicKey;
   final galleryLoadState = LoadState.LOADING.obs;
   final selectedVault = Vault(id: "public").obs;
   final images = <GalleryMedia>[].obs;
@@ -55,7 +57,8 @@ class HomeController extends GetxController with WidgetsBindingObserver {
   Future<void> buildThumbnailCache() async {
     for (final img in images) {
       if (thumbCache.containsKey(img.id)) continue;
-      final bytes = await gs.loadThumb(img);
+
+      final bytes = await gs.loadThumb(img, encryptionKey: selectedVaultPin ?? "public");
       thumbCache[img.id!] = bytes;
     }
     update();

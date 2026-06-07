@@ -10,14 +10,14 @@ class VaultController extends GetxController {
 
   final pin = ''.obs;
   final isLoading = false.obs;
-  final shakeNotifier = 0.obs; // increments to trigger shake
+  final shakeNotifier = 0.obs;
 
   static const _pinLength = 6;
 
   void onKeyTap(String key) {
     if (pin.value.length >= _pinLength) return;
     pin.value += key;
-    if (pin.value.length == _pinLength) _onPinComplete();
+    if (pin.value.length == _pinLength) onPinSubmit(pin.value);
   }
 
   void onBackspace() {
@@ -25,24 +25,19 @@ class VaultController extends GetxController {
     pin.value = pin.value.substring(0, pin.value.length - 1);
   }
 
-  Future<void> _onPinComplete() async {
-    isLoading.value = true;
-    final entered = pin.value;
-
-    final vault = vs.findVaultByPin(entered);
+  void onPinSubmit(String pin) async {
+    final vault = vs.findVaultByPin(pin);
     if (vault != null) {
       home.selectedVault.value = vault;
-      home.selectedVaultPin = entered;
-      home.getImages();
-      isLoading.value = false;
+      home.selectedVaultPin = pin;
+      home.update();
       Get.back(result: true);
     } else {
-      // Decoy — silently create empty vault, shake, reset
-      await vs.createVault(entered, 'Vault ${_uuid.v4().substring(0, 6)}');
-      isLoading.value = false;
-      shakeNotifier.value++; // triggers shake animation
-      await Future.delayed(const Duration(milliseconds: 600));
-      pin.value = '';
+      var newVault = await vs.createVault(pin, 'Vault ${_uuid.v4().substring(0, 6)}');
+      home.selectedVault.value = newVault;
+      home.selectedVaultPin = pin;
+      home.update();
+      Get.back(result: true);
     }
   }
 }
