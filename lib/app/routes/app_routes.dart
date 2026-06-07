@@ -9,6 +9,7 @@ abstract class Routes {
   static const SPLASHSCREEN = _Paths.SPLASHSCREEN;
   static const FORM_ADD_MEDIA = _Paths.FORM_ADD_MEDIA;
   static const MEDIA_VIEWER = _Paths.MEDIA_VIEWER;
+  static const VAULT = _Paths.VAULT;
 }
 
 abstract class _Paths {
@@ -17,4 +18,5 @@ abstract class _Paths {
   static const SPLASHSCREEN = '/splashscreen';
   static const FORM_ADD_MEDIA = '/form-add-media';
   static const MEDIA_VIEWER = '/media-viewer';
+  static const VAULT = '/vault';
 }

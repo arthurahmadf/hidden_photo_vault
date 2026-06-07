@@ -69,8 +69,9 @@ class FormAddMediaView extends GetView<FormAddMediaController> {
                 ] else ...[
                   12.verticalSpace,
                   Text(
-                    "Select new media from gallery or camera to add them into mY Gallery",
+                    "No image selected yet\n\nPick a media from your camera or gallery to continue.",
                     style: AppFonts.medium16,
+                    textAlign: TextAlign.center,
                   )
                 ],
               ],

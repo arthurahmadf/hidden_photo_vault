@@ -26,7 +26,7 @@ class AppColors {
 
   // Background Colors
   // static const Color background = Color.fromARGB(255, 241, 241, 241);
-  static const Color background = Color.fromARGB(255, 58, 58, 58);
+  static const Color background = Color(0xFFF9F9F9);
   static const Color backgroundAccent = Color.fromARGB(255, 230, 230, 230);
   static const Color backgroundDark = Color(0xFFE0E0E0);
   static const Color backgroundLight = Color(0xFFFFFFFF);

@@ -101,7 +101,11 @@ class HiveBox<T> {
   }
 
   T? find(bool Function(T item) test) {
-    return _box?.values.cast<T>().firstWhere(test, orElse: () => null as T);
+    try {
+      return _box?.values.cast<T>().firstWhere(test, orElse: () => null as T);
+    } catch (_) {
+      return null;
+    }
   }
 }
 

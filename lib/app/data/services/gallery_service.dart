@@ -12,13 +12,13 @@ import 'dart:typed_data';
 
 import 'package:encrypt/encrypt.dart' as aes;
 import 'package:flutter_image_compress/flutter_image_compress.dart';
+import 'package:hidden_photo_vault/app/data/models/gallery_media_model.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../core/services/data_service.dart';
 import '../../core/services/media_picker_service.dart';
-import '../models/gallery_media_model.dart';
 
 class GalleryService {
   static const _uuid = Uuid();
@@ -264,4 +264,11 @@ class GalleryService {
     };
     return map[p.extension(path).toLowerCase().replaceAll('.', '')] ?? 'image/jpeg';
   }
+  // ── Exposed for VaultService (changePin, export, import) ───────────────────
+
+  /// Public wrapper around [_encrypt] — used by VaultService for re-encryption.
+  Uint8List encryptBytes(Uint8List bytes, String key) => _encrypt(bytes, key);
+
+  /// Public wrapper around [_decrypt] — used by VaultService for re-encryption.
+  Uint8List decryptBytes(Uint8List bytes, String key) => _decrypt(bytes, key);
 }

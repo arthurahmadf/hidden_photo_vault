@@ -8,6 +8,8 @@ import '../modules/media_viewer/bindings/media_viewer_binding.dart';
 import '../modules/media_viewer/views/media_viewer_view.dart';
 import '../modules/splashscreen/bindings/splashscreen_binding.dart';
 import '../modules/splashscreen/views/splashscreen_view.dart';
+import '../modules/vault/bindings/vault_binding.dart';
+import '../modules/vault/views/vault_view.dart';
 
 // ignore_for_file: constant_identifier_names
 
@@ -38,6 +40,12 @@ class AppPages {
       name: _Paths.MEDIA_VIEWER,
       page: () => const MediaViewerView(),
       binding: MediaViewerBinding(),
+      transition: Transition.fadeIn,
+    ),
+    GetPage(
+      name: _Paths.VAULT,
+      page: () => const VaultView(),
+      binding: VaultBinding(),
     ),
   ];
 }
