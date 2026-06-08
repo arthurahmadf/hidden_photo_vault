@@ -3,13 +3,15 @@ import 'package:hidden_photo_vault/app/routes/app_pages.dart';
 
 class SplashscreenController extends GetxController {
   @override
-  void onReady() {
+  void onReady() async {
     super.onReady();
     redirToHome();
   }
 
   void redirToHome() async {
     await Future.delayed(const Duration(seconds: 2));
-    Get.toNamed(Routes.HOME);
+    Get.offAllNamed(Routes.HOME);
   }
+
+  Future<void> cleanEmptyVaults()async{}
 }

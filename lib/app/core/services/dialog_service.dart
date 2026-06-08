@@ -8,8 +8,6 @@ import 'package:intl/intl.dart';
 import '../style/app_colors.dart';
 import '../style/app_fonts.dart';
 
-
-
 /// A service to manage different types of dialogs in the application.
 ///
 /// This service provides various types of dialogs, including loading dialogs,
@@ -323,7 +321,7 @@ abstract class DialogService {
   /// - [onPositive]: Function executed when the confirmation button is pressed.
   /// - [negativeText]: The text for the cancel button.
   /// - [onNegative]: Function executed when the cancel button is pressed.
-  static showDoubleButtonDialog({
+  static Future<bool?> showDoubleButtonDialog({
     required String title,
     required String message,
     required String positiveText,
@@ -334,8 +332,8 @@ abstract class DialogService {
     IconData? titleIconPath,
   }) {
     final BuildContext? context = Get.context;
-    if (context == null) return;
-    Get.dialog(
+    if (context == null) return Future.value(null);
+    return Get.dialog<bool>(
       Dialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.r)),
         backgroundColor: Colors.white,
@@ -431,7 +429,7 @@ abstract class DialogService {
   /// - [buttonText]: The label for the action button.
   /// - [onButtonPressed]: Function executed when the action button is pressed.
   /// - [isWarning]: If `true`, applies warning colors (default: `false` for info dialogs).
-  static void showSingleButtonDialog({
+  static Future<bool?> showSingleButtonDialog({
     required String message,
     String buttonText = "OK",
     VoidCallback? onButtonPressed,
@@ -442,9 +440,9 @@ abstract class DialogService {
     IconData? titleIconPath,
   }) {
     final BuildContext? context = Get.context;
-    if (context == null) return;
+    if (context == null) return Future.value(null);
 
-    Get.dialog(
+    return Get.dialog<bool>(
       Dialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6.r)),
         backgroundColor: Colors.white,

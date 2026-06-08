@@ -5,7 +5,6 @@ import 'package:hidden_photo_vault/app/core/consts/app_icons.dart';
 import 'package:hidden_photo_vault/app/core/style/app_colors.dart';
 import 'package:hidden_photo_vault/app/core/style/app_fonts.dart';
 
-import '../../../core/services/dialog_service.dart';
 import '../controllers/home_controller.dart';
 
 class HomeView extends GetView<HomeController> {
@@ -14,26 +13,7 @@ class HomeView extends GetView<HomeController> {
   Widget build(BuildContext context) {
     return PopScope(
       canPop: false,
-      onPopInvoked: (didPop) {
-        if (didPop) return;
-
-        return DialogService.showDoubleButtonDialog(
-          title: "Keluar?",
-          message: "Yakin ingin meninggalkan halaman ini?",
-          positiveText: "Ya",
-          negativeText: "Batal",
-          onPositive: () {
-            Get.back(); // close dialog
-
-            if (context.mounted) {
-              Navigator.of(context).pop(); // actually leave page
-            }
-          },
-          onNegative: () {
-            Get.back(); // close dialog only
-          },
-        );
-      },
+      onPopInvoked: (didPop) => controller.onBackPressed(didPop, context),
       child: Scaffold(
         backgroundColor: AppColors.secondary,
         floatingActionButton: FloatingActionButton.small(
