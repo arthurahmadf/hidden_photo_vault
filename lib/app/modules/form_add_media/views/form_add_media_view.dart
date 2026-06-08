@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:hidden_photo_vault/app/core/services/media_picker_service.dart';
 import 'package:hidden_photo_vault/app/core/style/app_colors.dart';
 import 'package:hidden_photo_vault/app/core/style/app_fonts.dart';
+import 'package:hidden_photo_vault/app/core/widgets/app_form_widget.dart';
 import 'package:hidden_photo_vault/app/core/widgets/appbar_custom_widget.dart';
 import 'package:hidden_photo_vault/app/core/widgets/media_preview_container.dart';
 
@@ -49,6 +50,8 @@ class FormAddMediaView extends GetView<FormAddMediaController> {
                       color: AppColors.textSubfont,
                     ),
                   ),
+                  12.verticalSpace,
+                  AppTextField(controller: controller.tagTextController, hintText: "Insert Tag (Optional)"),
                   const Spacer(),
                   GestureDetector(
                     onTap: controller.onSaveMediaPressed,

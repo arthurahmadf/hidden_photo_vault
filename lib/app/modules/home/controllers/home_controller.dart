@@ -22,6 +22,7 @@ class HomeController extends GetxController with WidgetsBindingObserver {
   final _vaultWasClosed = false.obs;
   final selectedVault = Vault(id: "public").obs;
   String? selectedVaultPin;
+  final isGrouped = false.obs;
 
   @override
   void onInit() {
@@ -53,6 +54,18 @@ class HomeController extends GetxController with WidgetsBindingObserver {
         _vaultWasClosed.value = false;
       }
     }
+  }
+
+  Map<String, List<GalleryMedia>> get groupedImages {
+    final map = <String, List<GalleryMedia>>{};
+    for (final img in images) {
+      final tag = img.tag ?? 'default';
+      map.putIfAbsent(tag, () => []).add(img);
+    }
+    return Map.fromEntries([
+      if (map.containsKey('default')) MapEntry('default', map['default']!),
+      ...map.entries.where((e) => e.key != 'default').toList()..sort((a, b) => a.key.compareTo(b.key)),
+    ]);
   }
 
   Future<void> buildThumbnailCache() async {

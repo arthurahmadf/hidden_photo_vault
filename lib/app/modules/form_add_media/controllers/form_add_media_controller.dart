@@ -1,3 +1,4 @@
+import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
 import 'package:hidden_photo_vault/app/core/helpers/dialog_helper.dart';
 import 'package:hidden_photo_vault/app/core/helpers/logger_helper.dart';
@@ -10,6 +11,7 @@ import 'package:image_picker/image_picker.dart';
 class FormAddMediaController extends GetxController {
   final GalleryService gs = GalleryService();
   final HomeController homeController = Get.find<HomeController>();
+  final tagTextController = TextEditingController();
   XFile? file;
   MediaType? mediaType;
 
@@ -23,6 +25,7 @@ class FormAddMediaController extends GetxController {
         mediaType!,
         homeController.selectedVault.value.id ?? "public",
         encryptionKey: key,
+        tag: tagTextController.text.trim().isNotEmpty ? tagTextController.text.trim() : "default",
       );
       if (isSuccess) {
         closeDialog();

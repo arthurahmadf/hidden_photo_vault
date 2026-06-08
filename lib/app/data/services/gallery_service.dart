@@ -38,6 +38,7 @@ class GalleryService {
     MediaType mediaType,
     String vaultId, {
     String encryptionKey = publicKey,
+    String tag = "default",
   }) async {
     try {
       final id = _uuid.v4();
@@ -69,6 +70,7 @@ class GalleryService {
         fileSize: sourceBytes.length,
         importedAt: DateTime.now(),
         vaultId: vaultId,
+        tag: tag,
       );
 
       await DataService.gallery.put(id, image);

@@ -1,13 +1,14 @@
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:hidden_photo_vault/app/data/models/gallery_media_model.dart';
 import 'package:hidden_photo_vault/app/modules/media_viewer/controllers/media_viewer_controller.dart';
 
 class MediaViewerView extends GetView<MediaViewerController> {
   const MediaViewerView({super.key});
- 
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -19,62 +20,58 @@ class MediaViewerView extends GetView<MediaViewerController> {
           children: [
             // ── Media PageView ──────────────────────────────────────────────
             Obx(() => PageView.builder(
-              controller: controller.pageController,
-              itemCount: controller.mediaList.length,
-              onPageChanged: controller.onPageChanged,
-              itemBuilder: (context, index) {
-                final media = controller.mediaList[index];
-                return _MediaPage(
-                  key: ValueKey(media.id),
-                  media: media,
-                  controller: controller,
-                );
-              },
-            )),
- 
+                  controller: controller.pageController,
+                  itemCount: controller.mediaList.length,
+                  onPageChanged: controller.onPageChanged,
+                  itemBuilder: (context, index) {
+                    final media = controller.mediaList[index];
+                    return _MediaPage(
+                      key: ValueKey(media.id),
+                      media: media,
+                      controller: controller,
+                    );
+                  },
+                )),
+
             // ── Top overlay ─────────────────────────────────────────────────
             Obx(() => AnimatedSlide(
-              duration: const Duration(milliseconds: 220),
-              curve: Curves.easeInOut,
-              offset: controller.overlayVisible.value
-                  ? Offset.zero
-                  : const Offset(0, -1),
-              child: _TopBar(controller: controller),
-            )),
- 
+                  duration: const Duration(milliseconds: 220),
+                  curve: Curves.easeInOut,
+                  offset: controller.overlayVisible.value ? Offset.zero : const Offset(0, -1),
+                  child: _TopBar(controller: controller),
+                )),
+
             // ── Bottom overlay ──────────────────────────────────────────────
             Obx(() => AnimatedSlide(
-              duration: const Duration(milliseconds: 220),
-              curve: Curves.easeInOut,
-              offset: controller.overlayVisible.value
-                  ? Offset.zero
-                  : const Offset(0, 1),
-              child: Align(
-                alignment: Alignment.bottomCenter,
-                child: _BottomBar(controller: controller),
-              ),
-            )),
+                  duration: const Duration(milliseconds: 220),
+                  curve: Curves.easeInOut,
+                  offset: controller.overlayVisible.value ? Offset.zero : const Offset(0, 1),
+                  child: Align(
+                    alignment: Alignment.bottomCenter,
+                    child: _BottomBar(controller: controller),
+                  ),
+                )),
           ],
         ),
       ),
     );
   }
 }
- 
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Single media page (zoomable)
 // ─────────────────────────────────────────────────────────────────────────────
- 
+
 class _MediaPage extends StatelessWidget {
   final GalleryMedia media;
   final MediaViewerController controller;
- 
+
   const _MediaPage({
     super.key,
     required this.media,
     required this.controller,
   });
- 
+
   @override
   Widget build(BuildContext context) {
     return FutureBuilder<Uint8List>(
@@ -103,15 +100,15 @@ class _MediaPage extends StatelessWidget {
     );
   }
 }
- 
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Top bar
 // ─────────────────────────────────────────────────────────────────────────────
- 
+
 class _TopBar extends StatelessWidget {
   final MediaViewerController controller;
   const _TopBar({required this.controller});
- 
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -123,49 +120,49 @@ class _TopBar extends StatelessWidget {
         ),
       ),
       padding: EdgeInsets.only(
-        top: MediaQuery.of(context).padding.top + 8,
-        left: 8,
-        right: 8,
-        bottom: 24,
+        top: (MediaQuery.of(context).padding.top + 8).w,
+        left: 8.w,
+        right: 8.w,
+        bottom: 24.w,
       ),
       child: Obx(() => Row(
-        children: [
-          // Back
-          IconButton(
-            icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
-            onPressed: Get.back,
-          ),
- 
-          const Spacer(),
- 
-          // Counter
-          Text(
-            '${controller.currentIndex.value + 1} / ${controller.mediaList.length}',
-            style: const TextStyle(
-              color: Colors.white70,
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
- 
-          const Spacer(),
- 
-          // Placeholder to balance the back button width
-          const SizedBox(width: 48),
-        ],
-      )),
+            children: [
+              // Back
+              IconButton(
+                icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
+                onPressed: Get.back,
+              ),
+
+              const Spacer(),
+
+              // Counter
+              Text(
+                '${controller.currentIndex.value + 1} / ${controller.mediaList.length}',
+                style: const TextStyle(
+                  color: Colors.white70,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+
+              const Spacer(),
+
+              // Placeholder to balance the back button width
+              48.horizontalSpace,
+            ],
+          )),
     );
   }
 }
- 
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Bottom bar
 // ─────────────────────────────────────────────────────────────────────────────
- 
+
 class _BottomBar extends StatelessWidget {
   final MediaViewerController controller;
   const _BottomBar({required this.controller});
- 
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -177,10 +174,10 @@ class _BottomBar extends StatelessWidget {
         ),
       ),
       padding: EdgeInsets.only(
-        bottom: MediaQuery.of(context).padding.bottom + 16,
-        left: 24,
-        right: 24,
-        top: 32,
+        bottom: (MediaQuery.of(context).padding.bottom + 16).w,
+        left: 24.w,
+        right: 24.w,
+        top: 32.w,
       ),
       child: Obx(() {
         final media = controller.current;
@@ -203,7 +200,73 @@ class _BottomBar extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 2),
+                  4.verticalSpace,
+
+                  // ── Inline tag editor ─────────────────────────────────
+                  Obx(() => controller.isEditingTag.value
+                      ? SizedBox(
+                          height: 28.w,
+                          child: TextField(
+                            controller: controller.tagTextController,
+                            autofocus: true,
+                            onSubmitted: (_) => controller.saveTag(),
+                            onTapOutside: (_) => controller.saveTag(),
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 12,
+                            ),
+                            decoration: InputDecoration(
+                              isDense: true,
+                              contentPadding: EdgeInsets.symmetric(
+                                horizontal: 8.w,
+                                vertical: 4.w,
+                              ),
+                              filled: true,
+                              fillColor: Colors.white12,
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(6),
+                                borderSide: BorderSide.none,
+                              ),
+                              suffixIcon: GestureDetector(
+                                onTap: controller.saveTag,
+                                child: Icon(
+                                  Icons.check_rounded,
+                                  color: Colors.white70,
+                                  size: 16.w,
+                                ),
+                              ),
+                            ),
+                          ),
+                        )
+                      : GestureDetector(
+                          onTap: controller.startEditingTag,
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.label_outline_rounded,
+                                color: Colors.white54,
+                                size: 12.w,
+                              ),
+                              4.horizontalSpace,
+                              Text(
+                                media.tag ?? 'default',
+                                style: const TextStyle(
+                                  color: Colors.white54,
+                                  fontSize: 12,
+                                ),
+                              ),
+                              4.horizontalSpace,
+                              Icon(
+                                Icons.edit_outlined,
+                                color: Colors.white38,
+                                size: 11.w,
+                              ),
+                            ],
+                          ),
+                        )),
+
+                  2.verticalSpace,
                   Text(
                     _formatDate(media.importedAt),
                     style: const TextStyle(
@@ -214,15 +277,14 @@ class _BottomBar extends StatelessWidget {
                 ],
               ),
             ),
- 
-            const SizedBox(width: 16),
- 
+
+            16.horizontalSpace,
             // Delete button
             Obx(() => controller.isDeleting.value
-                ? const SizedBox(
-                    width: 44,
-                    height: 44,
-                    child: Center(
+                ? SizedBox(
+                    width: 44.w,
+                    height: 44.w,
+                    child: const Center(
                       child: CircularProgressIndicator(
                         color: Colors.white,
                         strokeWidth: 2,
@@ -231,10 +293,10 @@ class _BottomBar extends StatelessWidget {
                   )
                 : IconButton(
                     onPressed: () => _confirmDelete(context),
-                    icon: const Icon(
+                    icon: Icon(
                       Icons.delete_outline_rounded,
                       color: Colors.white,
-                      size: 26,
+                      size: 26.w,
                     ),
                   )),
           ],
@@ -242,7 +304,7 @@ class _BottomBar extends StatelessWidget {
       }),
     );
   }
- 
+
   void _confirmDelete(BuildContext context) {
     showDialog(
       context: context,
@@ -268,10 +330,9 @@ class _BottomBar extends StatelessWidget {
       ),
     );
   }
- 
+
   String _formatDate(DateTime? dt) {
     if (dt == null) return '';
     return '${dt.day}/${dt.month}/${dt.year}  ${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
   }
 }
- 

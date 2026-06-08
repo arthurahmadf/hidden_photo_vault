@@ -14,6 +14,8 @@ class MediaViewerController extends GetxController {
   final currentIndex = 0.obs;
   final overlayVisible = true.obs;
   final isDeleting = false.obs;
+  final isEditingTag = false.obs;
+  late final TextEditingController tagTextController;
 
   // Cache: id → decrypted full bytes
   final _cache = <String, Uint8List>{};
@@ -24,6 +26,7 @@ class MediaViewerController extends GetxController {
     final args = Get.arguments as ViewMediaArgument;
     currentIndex.value = args.initialIndex;
     pageController = PageController(initialPage: args.initialIndex);
+    tagTextController = TextEditingController();
 
     // Hide status bar for immersive view
     // SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
@@ -32,6 +35,7 @@ class MediaViewerController extends GetxController {
   @override
   void onClose() {
     pageController.dispose();
+    tagTextController.dispose();
     // Restore system UI on exit
     // SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
     super.onClose();
@@ -54,6 +58,24 @@ class MediaViewerController extends GetxController {
   // ── Interactions ──────────────────────────────────────────────────────────
 
   void toggleOverlay() => overlayVisible.toggle();
+
+  void startEditingTag() {
+    tagTextController.text = current.tag ?? 'default';
+    tagTextController.selection = TextSelection(
+      baseOffset: 0,
+      extentOffset: tagTextController.text.length,
+    );
+    isEditingTag.value = true;
+  }
+
+  Future<void> saveTag() async {
+    if (!isEditingTag.value) return;
+    isEditingTag.value = false;
+    final newTag = tagTextController.text.trim().isEmpty ? 'default' : tagTextController.text.trim();
+    if (newTag == (current.tag ?? 'default')) return; // no change
+    await home.gs.updateTag(current, newTag);
+    await home.refreshImages();
+  }
 
   void onPageChanged(int index) {
     currentIndex.value = index;
