@@ -112,9 +112,7 @@ class HomeView extends GetView<HomeController> {
                     return Container(
                       color: AppColors.background,
                       child: Obx(() {
-                        final isPrivate = controller.selectedVault.value.id != "public";
                         final images = controller.images;
-
                         return Column(
                           children: [
                             // // Secret vault banner
@@ -164,23 +162,23 @@ class _FlatGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GridView.builder(
-      padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 6.w),
-      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 4,
-        crossAxisSpacing: 6.w,
-        mainAxisSpacing: 6.w,
-      ),
-      itemCount: controller.images.length,
-      itemBuilder: (context, index) {
-        final media = controller.images[index];
-        return _GridTile(
-          media: media,
-          globalIndex: index,
-          controller: controller,
-        );
-      },
-    );
+    return Obx(() => GridView.builder(
+          padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 6.w),
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: controller.gridCount.value,
+            crossAxisSpacing: 6.w,
+            mainAxisSpacing: 6.w,
+          ),
+          itemCount: controller.images.length,
+          itemBuilder: (context, index) {
+            final media = controller.images[index];
+            return _GridTile(
+              media: media,
+              globalIndex: index,
+              controller: controller,
+            );
+          },
+        ));
   }
 }
 
@@ -258,26 +256,26 @@ class _TagSection extends StatelessWidget {
           ),
 
         // Grid
-        GridView.builder(
-          padding: EdgeInsets.symmetric(horizontal: 6.w),
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 4,
-            crossAxisSpacing: 6.w,
-            mainAxisSpacing: 6.w,
-          ),
-          itemCount: mediaList.length,
-          itemBuilder: (context, index) {
-            final media = mediaList[index];
-            final globalIndex = controller.images.indexOf(media);
-            return _GridTile(
-              media: media,
-              globalIndex: globalIndex,
-              controller: controller,
-            );
-          },
-        ),
+        Obx(() => GridView.builder(
+              padding: EdgeInsets.symmetric(horizontal: 6.w),
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: controller.gridCount.value,
+                crossAxisSpacing: 6.w,
+                mainAxisSpacing: 6.w,
+              ),
+              itemCount: mediaList.length,
+              itemBuilder: (context, index) {
+                final media = mediaList[index];
+                final globalIndex = controller.images.indexOf(media);
+                return _GridTile(
+                  media: media,
+                  globalIndex: globalIndex,
+                  controller: controller,
+                );
+              },
+            )),
 
         SizedBox(height: 20.w),
       ],

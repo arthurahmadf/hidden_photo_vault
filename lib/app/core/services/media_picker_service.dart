@@ -79,7 +79,7 @@ class MediaPickerService {
           ? MediaPickResult.permissionPermanentlyDenied()
           : MediaPickResult.permissionDenied();
     }
-    Get.find<HomeController>().isPickerOpen = true;
+    Get.find<HomeController>().isBusy = true;
     return _pick(ImageSource.gallery, type);
   }
 
@@ -91,7 +91,7 @@ class MediaPickerService {
           ? MediaPickResult.permissionPermanentlyDenied()
           : MediaPickResult.permissionDenied();
     }
-    Get.find<HomeController>().isPickerOpen = true;
+    Get.find<HomeController>().isBusy = true;
     return _pick(ImageSource.camera, type);
   }
 

@@ -1,3 +1,4 @@
+import 'package:hidden_photo_vault/app/data/models/app_setting_model.dart';
 import 'package:hidden_photo_vault/app/data/models/gallery_media_model.dart';
 import 'package:hidden_photo_vault/app/data/models/vault_model.dart';
 import 'package:hive_flutter/hive_flutter.dart';
@@ -115,6 +116,7 @@ class DataService {
   static final pageLog = HiveBox<PageLog>('pageLog');
   static final gallery = HiveBox<GalleryMedia>('galleryImage');
   static final vault = HiveBox<Vault>('vault');
+  static final setting = HiveBox<AppSetting>('appSetting');
 
   // static final user = HiveBox<User>('user'); // add more as needed
 
@@ -127,6 +129,7 @@ class DataService {
     Hive.registerAdapter(PageLogAdapter());
     Hive.registerAdapter(GalleryMediaAdapter());
     Hive.registerAdapter(VaultAdapter());
+    Hive.registerAdapter(AppSettingAdapter());
 
     // open boxes
     await auth.init();
@@ -134,6 +137,7 @@ class DataService {
     await pageLog.init();
     await gallery.init();
     await vault.init();
+    await setting.init();
   }
 
   /// Close all boxes safely
@@ -143,6 +147,7 @@ class DataService {
     await pageLog.close();
     await gallery.close();
     await vault.close();
+    await setting.close();
   }
 
   /// Delete all boxes from disk (wipe all persisted data)
@@ -152,5 +157,6 @@ class DataService {
     await pageLog.deleteBox();
     await gallery.deleteBox();
     await vault.deleteBox();
+    await setting.deleteBox();
   }
 }

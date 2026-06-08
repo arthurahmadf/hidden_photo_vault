@@ -4,7 +4,9 @@ import 'package:get/get.dart';
 import 'package:hidden_photo_vault/app/core/enums/load_state_enum.dart';
 import 'package:hidden_photo_vault/app/core/helpers/dialog_helper.dart';
 import 'package:hidden_photo_vault/app/core/helpers/logger_helper.dart';
+import 'package:hidden_photo_vault/app/core/services/data_service.dart';
 import 'package:hidden_photo_vault/app/core/services/dialog_service.dart';
+import 'package:hidden_photo_vault/app/data/models/app_setting_model.dart';
 import 'package:hidden_photo_vault/app/data/models/gallery_media_model.dart';
 import 'package:hidden_photo_vault/app/data/models/vault_model.dart';
 import 'package:hidden_photo_vault/app/data/services/gallery_service.dart';
@@ -22,19 +24,20 @@ class HomeController extends GetxController with WidgetsBindingObserver {
   final selectedVault = Vault(id: "public").obs;
   String? selectedVaultPin;
   final isGrouped = false.obs;
-  bool isPickerOpen = false;
+  bool isBusy = false;
+  final gridCount = (DataService.setting.data?.gridItemCount ?? 4).obs;
 
   @override
   void onInit() {
     super.onInit();
-    print("object");
+    final s = DataService.setting.data ?? AppSetting();
+    isGrouped.value = s.preferTaggedView;
     WidgetsBinding.instance.addObserver(this);
   }
 
   @override
   void onClose() {
     WidgetsBinding.instance.removeObserver(this);
-    print("object");
     super.onClose();
   }
 
@@ -47,10 +50,10 @@ class HomeController extends GetxController with WidgetsBindingObserver {
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.paused) {
-      if (isPickerOpen) return;
+      if (isBusy) return;
       closeVault();
     } else if (state == AppLifecycleState.resumed) {
-      isPickerOpen = false;
+      isBusy = false;
       if (_vaultWasClosed.value) {
         LoggerHelper.info("Vault Closed on Background/Paused State");
         _vaultWasClosed.value = false;
