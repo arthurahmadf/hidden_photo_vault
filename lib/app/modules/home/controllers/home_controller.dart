@@ -106,6 +106,7 @@ class HomeController extends GetxController with WidgetsBindingObserver {
   void closeVault() async {
     if (selectedVault.value.id == "public") return;
     selectedVault.value = Vault(id: "public");
+    selectedVaultPin = null;
     getImages();
     _vaultWasClosed.value = true;
     update();
@@ -113,6 +114,12 @@ class HomeController extends GetxController with WidgetsBindingObserver {
 
   void onMediaTapped(GalleryMedia mediaMeta, int index) {
     Get.toNamed(Routes.MEDIA_VIEWER, arguments: ViewMediaArgument(initialIndex: index));
+  }
+
+  Future<bool> onBackPressed() async {
+    var canPop = true;
+
+    return canPop;
   }
 
   void onSettingTapped() {}

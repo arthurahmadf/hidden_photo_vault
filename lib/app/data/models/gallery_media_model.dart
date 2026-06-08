@@ -30,6 +30,8 @@ class GalleryMedia {
   DateTime? importedAt;
   @HiveField(7)
   String? vaultId;
+  @HiveField(8)
+  String? tag;
 
   GalleryMedia({
     this.id,
@@ -40,6 +42,7 @@ class GalleryMedia {
     this.fileSize,
     this.importedAt,
     this.vaultId,
+    this.tag,
   });
 
   GalleryMedia copyWith({
@@ -51,6 +54,7 @@ class GalleryMedia {
     int? fileSize,
     DateTime? importedAt,
     String? vaultId,
+    String? tag,
   }) =>
       GalleryMedia(
         id: id ?? this.id,
@@ -61,6 +65,7 @@ class GalleryMedia {
         fileSize: fileSize ?? this.fileSize,
         importedAt: importedAt ?? this.importedAt,
         vaultId: vaultId ?? this.vaultId,
+        tag: tag ?? this.tag,
       );
 
   factory GalleryMedia.fromJson(Map<String, dynamic> json) => GalleryMedia(
@@ -72,6 +77,7 @@ class GalleryMedia {
         fileSize: json["fileSize"],
         importedAt: json["importedAt"] == null ? null : DateTime.parse(json["importedAt"]),
         vaultId: json["vaultId"],
+        tag: json["tag"],
       );
 
   Map<String, dynamic> toJson() => {
@@ -83,5 +89,6 @@ class GalleryMedia {
         "fileSize": fileSize,
         "importedAt": importedAt?.toIso8601String(),
         "vaultId": vaultId,
+        "tag": tag,
       };
 }

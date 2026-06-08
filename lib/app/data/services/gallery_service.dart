@@ -101,6 +101,12 @@ class GalleryService {
     }
   }
 
+  Future<bool> updateTag(GalleryMedia media, String tag) async {
+    final updated = media.copyWith(tag: tag.trim().isEmpty ? 'default' : tag.trim());
+    await DataService.gallery.update(media.id!, updated);
+    return true;
+  }
+
   /// Return all images belonging to [vaultId], sorted newest first.
   Future<List<GalleryMedia>> getImages(String vaultId) async {
     final list = DataService.gallery.where((img) => img.vaultId == vaultId);

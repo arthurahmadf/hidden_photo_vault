@@ -25,13 +25,14 @@ class GalleryMediaAdapter extends TypeAdapter<GalleryMedia> {
       fileSize: fields[5] as int?,
       importedAt: fields[6] as DateTime?,
       vaultId: fields[7] as String?,
+      tag: fields[8] as String?,
     );
   }
 
   @override
   void write(BinaryWriter writer, GalleryMedia obj) {
     writer
-      ..writeByte(8)
+      ..writeByte(9)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -47,7 +48,9 @@ class GalleryMediaAdapter extends TypeAdapter<GalleryMedia> {
       ..writeByte(6)
       ..write(obj.importedAt)
       ..writeByte(7)
-      ..write(obj.vaultId);
+      ..write(obj.vaultId)
+      ..writeByte(8)
+      ..write(obj.tag);
   }
 
   @override
