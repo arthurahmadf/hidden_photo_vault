@@ -195,6 +195,7 @@ class VaultService {
             'importedAt': m.importedAt?.toIso8601String(),
             'fullSize': fullFile.lengthSync(),
             'thumbSize': thumbFile.lengthSync(),
+            'tag': m.tag ?? 'default',
           };
         }).toList(),
       };
@@ -287,8 +288,10 @@ class VaultService {
         final fullSize = meta['fullSize'] as int;
         final thumbSize = meta['thumbSize'] as int;
 
+        offset += 4;
         final fullEnc = raw.sublist(offset, offset + fullSize);
         offset += fullSize;
+        offset += 4;
         final thumbEnc = raw.sublist(offset, offset + thumbSize);
         offset += thumbSize;
 
@@ -308,6 +311,7 @@ class VaultService {
           fileSize: meta['fileSize'],
           importedAt: meta['importedAt'] != null ? DateTime.parse(meta['importedAt']) : DateTime.now(),
           vaultId: vault.id,
+          tag: meta['tag'] ?? 'default',
         );
         await DataService.gallery.put(id, image);
       }

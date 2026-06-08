@@ -1,5 +1,7 @@
 import 'package:get/get.dart';
 
+import '../modules/app_setting/bindings/app_setting_binding.dart';
+import '../modules/app_setting/views/app_setting_view.dart';
 import '../modules/form_add_media/bindings/form_add_media_binding.dart';
 import '../modules/form_add_media/views/form_add_media_view.dart';
 import '../modules/home/bindings/home_binding.dart';
@@ -46,6 +48,11 @@ class AppPages {
       name: _Paths.VAULT,
       page: () => const VaultView(),
       binding: VaultBinding(),
+    ),
+    GetPage(
+      name: _Paths.APP_SETTING,
+      page: () => const AppSettingView(),
+      binding: AppSettingBinding(),
     ),
   ];
 }

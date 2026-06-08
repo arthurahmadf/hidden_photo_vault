@@ -10,6 +10,7 @@ abstract class Routes {
   static const FORM_ADD_MEDIA = _Paths.FORM_ADD_MEDIA;
   static const MEDIA_VIEWER = _Paths.MEDIA_VIEWER;
   static const VAULT = _Paths.VAULT;
+  static const APP_SETTING = _Paths.APP_SETTING;
 }
 
 abstract class _Paths {
@@ -19,4 +20,5 @@ abstract class _Paths {
   static const FORM_ADD_MEDIA = '/form-add-media';
   static const MEDIA_VIEWER = '/media-viewer';
   static const VAULT = '/vault';
+  static const APP_SETTING = '/app-setting';
 }

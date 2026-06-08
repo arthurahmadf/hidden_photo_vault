@@ -16,6 +16,7 @@ class MediaViewerController extends GetxController {
   final isDeleting = false.obs;
   final isEditingTag = false.obs;
   late final TextEditingController tagTextController;
+  final isZoomed = false.obs;
 
   // Cache: id → decrypted full bytes
   final _cache = <String, Uint8List>{};

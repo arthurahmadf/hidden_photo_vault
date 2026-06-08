@@ -1,5 +1,4 @@
-import 'dart:typed_data';
-
+import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
 import 'package:hidden_photo_vault/app/core/enums/load_state_enum.dart';
@@ -23,6 +22,7 @@ class HomeController extends GetxController with WidgetsBindingObserver {
   final selectedVault = Vault(id: "public").obs;
   String? selectedVaultPin;
   final isGrouped = false.obs;
+  bool isPickerOpen = false;
 
   @override
   void onInit() {
@@ -47,8 +47,10 @@ class HomeController extends GetxController with WidgetsBindingObserver {
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.paused) {
+      if (isPickerOpen) return;
       closeVault();
     } else if (state == AppLifecycleState.resumed) {
+      isPickerOpen = false;
       if (_vaultWasClosed.value) {
         LoggerHelper.info("Vault Closed on Background/Paused State");
         _vaultWasClosed.value = false;
@@ -69,6 +71,7 @@ class HomeController extends GetxController with WidgetsBindingObserver {
   }
 
   Future<void> buildThumbnailCache() async {
+    LoggerHelper.info("building cache | vaultId: ${selectedVault.value.id} | encKey: $activeEncKey");
     for (final img in images) {
       if (thumbCache.containsKey(img.id)) continue;
 
@@ -151,11 +154,12 @@ class HomeController extends GetxController with WidgetsBindingObserver {
       if (isVaultOpen) {
         closeVault();
       } else if (context.mounted) {
-        Navigator.of(context).pop();
-        Get.back();
+        SystemNavigator.pop();
       }
     }
   }
 
-  void onSettingTapped() {}
+  void onSettingTapped() {
+    Get.toNamed(Routes.APP_SETTING);
+  }
 }

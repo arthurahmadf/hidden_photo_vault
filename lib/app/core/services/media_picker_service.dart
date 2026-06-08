@@ -16,6 +16,8 @@
 
 import 'dart:io';
 
+import 'package:get/get.dart';
+import 'package:hidden_photo_vault/app/modules/home/controllers/home_controller.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
 
@@ -77,6 +79,7 @@ class MediaPickerService {
           ? MediaPickResult.permissionPermanentlyDenied()
           : MediaPickResult.permissionDenied();
     }
+    Get.find<HomeController>().isPickerOpen = true;
     return _pick(ImageSource.gallery, type);
   }
 
@@ -88,6 +91,7 @@ class MediaPickerService {
           ? MediaPickResult.permissionPermanentlyDenied()
           : MediaPickResult.permissionDenied();
     }
+    Get.find<HomeController>().isPickerOpen = true;
     return _pick(ImageSource.camera, type);
   }
 

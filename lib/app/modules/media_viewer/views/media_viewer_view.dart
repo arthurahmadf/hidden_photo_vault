@@ -21,6 +21,9 @@ class MediaViewerView extends GetView<MediaViewerController> {
             // ── Media PageView ──────────────────────────────────────────────
             Obx(() => PageView.builder(
                   controller: controller.pageController,
+                  // freeze PageView when zoomed in so pan doesn't fight swipe
+                  physics:
+                      controller.isZoomed.value ? const NeverScrollableScrollPhysics() : const PageScrollPhysics(),
                   itemCount: controller.mediaList.length,
                   onPageChanged: controller.onPageChanged,
                   itemBuilder: (context, index) {
@@ -62,7 +65,7 @@ class MediaViewerView extends GetView<MediaViewerController> {
 // Single media page (zoomable)
 // ─────────────────────────────────────────────────────────────────────────────
 
-class _MediaPage extends StatelessWidget {
+class _MediaPage extends StatefulWidget {
   final GalleryMedia media;
   final MediaViewerController controller;
 
@@ -73,9 +76,34 @@ class _MediaPage extends StatelessWidget {
   });
 
   @override
+  State<_MediaPage> createState() => _MediaPageState();
+}
+
+class _MediaPageState extends State<_MediaPage> {
+  late final TransformationController _transformController;
+
+  @override
+  void initState() {
+    super.initState();
+    _transformController = TransformationController();
+    _transformController.addListener(() {
+      final scale = _transformController.value.getMaxScaleOnAxis();
+      widget.controller.isZoomed.value = scale > 1.05;
+    });
+  }
+
+  @override
+  void dispose() {
+    // Reset zoom state when this page is disposed (swiped away)
+    widget.controller.isZoomed.value = false;
+    _transformController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return FutureBuilder<Uint8List>(
-      future: controller.loadMedia(media),
+      future: widget.controller.loadMedia(widget.media),
       builder: (context, snapshot) {
         if (!snapshot.hasData) {
           return const Center(
@@ -83,10 +111,12 @@ class _MediaPage extends StatelessWidget {
           );
         }
         return Hero(
-          tag: 'media_${media.id}',
+          tag: 'media_${widget.media.id}',
           child: InteractiveViewer(
+            transformationController: _transformController,
             minScale: 0.8,
             maxScale: 5.0,
+            panEnabled: true,
             child: Center(
               child: Image.memory(
                 snapshot.data!,
@@ -127,15 +157,11 @@ class _TopBar extends StatelessWidget {
       ),
       child: Obx(() => Row(
             children: [
-              // Back
               IconButton(
                 icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
                 onPressed: Get.back,
               ),
-
               const Spacer(),
-
-              // Counter
               Text(
                 '${controller.currentIndex.value + 1} / ${controller.mediaList.length}',
                 style: const TextStyle(
@@ -144,10 +170,7 @@ class _TopBar extends StatelessWidget {
                   fontWeight: FontWeight.w500,
                 ),
               ),
-
               const Spacer(),
-
-              // Placeholder to balance the back button width
               48.horizontalSpace,
             ],
           )),
@@ -184,7 +207,6 @@ class _BottomBar extends StatelessWidget {
         return Row(
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
-            // File info
             Expanded(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -201,8 +223,6 @@ class _BottomBar extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                   ),
                   4.verticalSpace,
-
-                  // ── Inline tag editor ─────────────────────────────────
                   Obx(() => controller.isEditingTag.value
                       ? SizedBox(
                           height: 28.w,
@@ -211,16 +231,10 @@ class _BottomBar extends StatelessWidget {
                             autofocus: true,
                             onSubmitted: (_) => controller.saveTag(),
                             onTapOutside: (_) => controller.saveTag(),
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 12,
-                            ),
+                            style: const TextStyle(color: Colors.white, fontSize: 12),
                             decoration: InputDecoration(
                               isDense: true,
-                              contentPadding: EdgeInsets.symmetric(
-                                horizontal: 8.w,
-                                vertical: 4.w,
-                              ),
+                              contentPadding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.w),
                               filled: true,
                               fillColor: Colors.white12,
                               border: OutlineInputBorder(
@@ -229,11 +243,7 @@ class _BottomBar extends StatelessWidget {
                               ),
                               suffixIcon: GestureDetector(
                                 onTap: controller.saveTag,
-                                child: Icon(
-                                  Icons.check_rounded,
-                                  color: Colors.white70,
-                                  size: 16.w,
-                                ),
+                                child: Icon(Icons.check_rounded, color: Colors.white70, size: 16.w),
                               ),
                             ),
                           ),
@@ -243,61 +253,37 @@ class _BottomBar extends StatelessWidget {
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(
-                                Icons.label_outline_rounded,
-                                color: Colors.white54,
-                                size: 12.w,
-                              ),
+                              Icon(Icons.label_outline_rounded, color: Colors.white54, size: 12.w),
                               4.horizontalSpace,
                               Text(
                                 media.tag ?? 'default',
-                                style: const TextStyle(
-                                  color: Colors.white54,
-                                  fontSize: 12,
-                                ),
+                                style: const TextStyle(color: Colors.white54, fontSize: 12),
                               ),
                               4.horizontalSpace,
-                              Icon(
-                                Icons.edit_outlined,
-                                color: Colors.white38,
-                                size: 11.w,
-                              ),
+                              Icon(Icons.edit_outlined, color: Colors.white38, size: 11.w),
                             ],
                           ),
                         )),
-
                   2.verticalSpace,
                   Text(
                     _formatDate(media.importedAt),
-                    style: const TextStyle(
-                      color: Colors.white60,
-                      fontSize: 12,
-                    ),
+                    style: const TextStyle(color: Colors.white60, fontSize: 12),
                   ),
                 ],
               ),
             ),
-
             16.horizontalSpace,
-            // Delete button
             Obx(() => controller.isDeleting.value
                 ? SizedBox(
                     width: 44.w,
                     height: 44.w,
                     child: const Center(
-                      child: CircularProgressIndicator(
-                        color: Colors.white,
-                        strokeWidth: 2,
-                      ),
+                      child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
                     ),
                   )
                 : IconButton(
                     onPressed: () => _confirmDelete(context),
-                    icon: Icon(
-                      Icons.delete_outline_rounded,
-                      color: Colors.white,
-                      size: 26.w,
-                    ),
+                    icon: Icon(Icons.delete_outline_rounded, color: Colors.white, size: 26.w),
                   )),
           ],
         );
@@ -321,10 +307,7 @@ class _BottomBar extends StatelessWidget {
               Navigator.pop(context);
               controller.deleteCurrentMedia();
             },
-            child: Text(
-              'Delete',
-              style: TextStyle(color: Theme.of(context).colorScheme.error),
-            ),
+            child: Text('Delete', style: TextStyle(color: Theme.of(context).colorScheme.error)),
           ),
         ],
       ),

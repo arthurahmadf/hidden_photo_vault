@@ -18,6 +18,8 @@ class FormAddMediaController extends GetxController {
   void onSaveMediaPressed() async {
     if (file == null) return;
     DialogService.showLoading(dismissible: false);
+    LoggerHelper.info("vaultId: ${homeController.selectedVault.value.id}");
+    LoggerHelper.info("vaultPin: ${homeController.selectedVaultPin}");
     try {
       var key = homeController.selectedVaultPin ?? "public";
       var isSuccess = await gs.insertMedia(
