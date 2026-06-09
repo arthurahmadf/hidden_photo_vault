@@ -1,7 +1,7 @@
 name: hidden_photo_vault
 description: "Gallery app with Hidden Vault mechanism and shareable vault box."
 publish_to: "none"
-version: 1.2.0+4
+version: 1.2.1+5
 #Project iki nggawe Flutter 3.22.1
 environment:
   sdk: ">=3.4.1 <4.0.0"

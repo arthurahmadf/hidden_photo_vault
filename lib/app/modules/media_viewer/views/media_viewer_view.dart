@@ -22,8 +22,9 @@ class MediaViewerView extends GetView<MediaViewerController> {
             Obx(() => PageView.builder(
                   controller: controller.pageController,
                   // freeze PageView when zoomed in so pan doesn't fight swipe
-                  physics:
-                      controller.isZoomed.value ? const NeverScrollableScrollPhysics() : const PageScrollPhysics(),
+                  physics: (controller.isZoomed.value || !controller.overlayVisible.value)
+                      ? const NeverScrollableScrollPhysics()
+                      : const PageScrollPhysics(),
                   itemCount: controller.mediaList.length,
                   onPageChanged: controller.onPageChanged,
                   itemBuilder: (context, index) {
