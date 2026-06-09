@@ -1,10 +1,14 @@
+import 'dart:io';
+
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
 import 'package:hidden_photo_vault/app/data/models/gallery_media_model.dart';
 import 'package:hidden_photo_vault/app/data/services/gallery_service.dart';
 import 'package:hidden_photo_vault/app/modules/home/controllers/home_controller.dart';
 import 'package:hidden_photo_vault/app/modules/media_viewer/arguments/view_media_argument.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
 
 class MediaViewerController extends GetxController {
   final HomeController home = Get.find<HomeController>();
@@ -130,5 +134,66 @@ class MediaViewerController extends GetxController {
 
     currentIndex.value = newIndex;
     isDeleting.value = false;
+  }
+
+  Future<void> shareCurrentMedia() async {
+    try {
+      final media = current;
+      final plainBytes = await home.gs.loadFull(media, encryptionKey: _encKey);
+
+      // write to temp cache, share, cleanup after
+      final cacheDir = await getTemporaryDirectory();
+      final fileName = media.originalName ?? '${media.id}.jpg';
+      final tempFile = File('${cacheDir.path}/$fileName');
+      await tempFile.writeAsBytes(plainBytes, flush: true);
+      home.isBusy = true;
+      await Share.shareXFiles(
+        [XFile(tempFile.path, mimeType: media.mimeType ?? 'image/jpeg')],
+      );
+
+      // cleanup after share sheet closes
+      Future.delayed(const Duration(seconds: 30), () async {
+        if (await tempFile.exists()) await tempFile.delete();
+      });
+    } catch (e) {
+      Get.snackbar(
+        'Error',
+        'Could not share file.',
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    }
+  }
+
+  Future<void> saveCurrentToDownload() async {
+    try {
+      final media = current;
+      final plainBytes = await home.gs.loadFull(media, encryptionKey: _encKey);
+
+      const downloadsPath = '/storage/emulated/0/Download';
+      final dir = Directory(downloadsPath);
+      if (!await dir.exists()) await dir.create(recursive: true);
+
+      final fileName = media.originalName ?? '${media.id}.jpg';
+      final dest = File('$downloadsPath/$fileName');
+      await dest.writeAsBytes(plainBytes, flush: true);
+
+      Get.snackbar(
+        'Saved',
+        '$fileName saved to Downloads.',
+        backgroundColor: Colors.white,
+        colorText: Colors.black,
+        snackPosition: SnackPosition.TOP,
+      );
+    } catch (e) {
+      Get.snackbar(
+        'Error',
+        'Could not save file.',
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+        snackPosition: SnackPosition.TOP,
+      );
+    }
   }
 }

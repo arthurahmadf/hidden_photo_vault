@@ -61,6 +61,21 @@ class AppSettingView extends GetView<AppSettingController> {
                         )
                       : null,
                 ),
+
+                // Export and Share
+                _SettingsTile(
+                  icon: Icons.share_outlined,
+                  title: 'Export and Share Vault',
+                  subtitle: 'Share .hpv via Drive, WhatsApp, etc.',
+                  onTap: controller.isExporting.value ? null : controller.onShareVaultTapped,
+                  trailing: controller.isExporting.value
+                      ? SizedBox(
+                          width: 20.w,
+                          height: 20.w,
+                          child: const CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary),
+                        )
+                      : null,
+                ),
               ],
 
               // Import — always shown

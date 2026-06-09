@@ -15,6 +15,7 @@ import 'package:hidden_photo_vault/app/core/style/app_fonts.dart';
 import 'package:hidden_photo_vault/app/data/models/app_setting_model.dart';
 import 'package:hidden_photo_vault/app/data/services/vault_service.dart';
 import 'package:hidden_photo_vault/app/modules/home/controllers/home_controller.dart';
+import 'package:share_plus/share_plus.dart';
 
 import '../../../core/services/data_service.dart';
 
@@ -130,7 +131,10 @@ class AppSettingController extends GetxController {
     final vault = home.selectedVault.value;
     final pin = home.selectedVaultPin;
     if (pin == null) return;
-
+    if (home.images.isEmpty) {
+      _showSnack('Nothing to export', 'Add some images to this vault first.');
+      return;
+    }
     isExporting.value = true;
     try {
       // Generate .hpv file
@@ -153,6 +157,36 @@ class AppSettingController extends GetxController {
       isExporting.value = false;
     }
   }
+
+  // ── Export and Share ──────────────────────────────────────────────────────────────────
+  Future<void> onShareVaultTapped() async {
+    if (!isSecretVaultActive) return;
+    final vault = home.selectedVault.value;
+    final pin = home.selectedVaultPin;
+    if (pin == null) return;
+    if (home.images.isEmpty) {
+      _showSnack('Nothing to export', 'Add some images to this vault first.');
+      return;
+    }
+    isExporting.value = true;
+    try {
+      final hpvFile = await vs.exportVault(vault, pin);
+      if (hpvFile == null) {
+        _showSnack('Export failed', 'Could not generate export file.', isError: true);
+        return;
+      }
+      await Share.shareXFiles(
+        [XFile(hpvFile.path)],
+        subject: '${vault.name} vault backup',
+      );
+    } catch (e) {
+      _showSnack('Export failed', e.toString(), isError: true);
+    } finally {
+      isExporting.value = false;
+    }
+  }
+
+  // ── Save to Download ──────────────────────────────────────────────────────────────────
 
   Future<File?> _saveToDownloads(File hpvFile) async {
     try {
@@ -229,7 +263,7 @@ class AppSettingController extends GetxController {
         snackPosition: SnackPosition.BOTTOM,
         margin: EdgeInsets.all(16.w),
         borderRadius: 12.r,
-        duration: const Duration(milliseconds: 500));
+        duration: const Duration(seconds: 1));
   }
 }
 

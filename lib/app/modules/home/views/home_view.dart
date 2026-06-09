@@ -62,12 +62,9 @@ class HomeView extends GetView<HomeController> {
                             ),
                           ),
                           8.horizontalSpace,
-                          GestureDetector(
-                            onTap: controller.getImages,
-                            child: Text(
-                              isPrivate ? controller.selectedVault.value.name ?? "mY Gallery (P)" : "mY Gallery",
-                              style: AppFonts.bold18.copyWith(color: AppColors.background),
-                            ),
+                          Text(
+                            isPrivate ? controller.selectedVault.value.name ?? "mY Gallery (P)" : "mY Gallery",
+                            style: AppFonts.bold18.copyWith(color: AppColors.background),
                           ),
                           const Spacer(),
                           Obx(() {

@@ -273,6 +273,22 @@ class _BottomBar extends StatelessWidget {
               ),
             ),
             16.horizontalSpace,
+            IconButton(
+              onPressed: controller.shareCurrentMedia,
+              icon: Icon(
+                Icons.share_outlined,
+                color: Colors.white,
+                size: 26.w,
+              ),
+            ),
+            IconButton(
+              onPressed: controller.saveCurrentToDownload,
+              icon: Icon(
+                Icons.download_outlined,
+                color: Colors.white,
+                size: 26.w,
+              ),
+            ),
             Obx(() => controller.isDeleting.value
                 ? SizedBox(
                     width: 44.w,
