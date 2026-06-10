@@ -25,7 +25,7 @@ class GalleryService {
   static const _vaultDir = 'vault';
   static const _encExt = '.enc';
   static const _thumbSuffix = '_thumb';
-  static const _thumbSize = 200;
+  static const _thumbSize = 350;
   static const publicKey = 'public'; // hardcoded key for public vault
 
   // ── Public API ──────────────────────────────────────────────────────────────
@@ -146,7 +146,7 @@ class GalleryService {
       sourceBytes,
       minWidth: _thumbSize,
       minHeight: _thumbSize,
-      quality: 80,
+      quality: 90,
       format: CompressFormat.jpeg,
     );
   }

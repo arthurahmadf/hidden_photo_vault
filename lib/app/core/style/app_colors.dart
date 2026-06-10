@@ -1,80 +1,45 @@
 import 'package:flutter/material.dart';
 
-class AppColors {
-  // Primary Colors
-  static const Color primary = Color(0xFF2C5EAD);
-  static const Color primary50 = Color(0xFFF3FFFB);
-  static const Color primary100 = Color(0xFFD9FFF3);
-  static const Color primary500 = Color(0xFF5CD4AC);
-  static const Color primary600 = Color(0xFF47BA94);
-  static const Color primary700 = Color(0xFF3A927B);
-  static const Color primary800 = Color(0xFF47BA94);
-  static const Color primary2 = Color(0xFF256E99);
-  static const Color primaryDark = Color(0xFF5E35B1);
-  static const Color primaryLight = Color(0xFF4D94FF);
-  static const Color gradationEnd = Color.fromARGB(255, 231, 217, 14);
+abstract class AppColors {
+  // ── Surfaces (dark grey hierarchy) ───────────────────────────────────────
+  static const Color background = Color(0xFF141414); // scaffold, deepest
+  static const Color surface = Color(0xFF1E1E1E); // cards, sheets
+  static const Color surfaceHigh = Color(0xFF262626); // inputs, tiles
+  static const Color surfaceHighest = Color(0xFF2E2E2E); // elevated elements
 
-  // Secondary Colors
-  static const Color secondary = Color(0xFF1591DC);
-  static const Color secondary100 = Color(0xFFDDF3FF);
-  static const Color secondaryDark = Color(0xFFCC8400);
-  static const Color secondaryLight = Color(0xFFFFBF40);
+  // ── Accent ────────────────────────────────────────────────────────────────
+  static const Color primary = Color(0xFFFFFFFF); // white — all interactive
+  static const Color primaryMuted = Color(0xFF3A3A3A); // subtle tint backgrounds
 
-  // Tertiary Colors
-  static const Color tertiary = Color(0xFF4BB8FA);
-  static const Color tertiar2y = Color(0xFFC4E2F5);
+  // ── On-colors ─────────────────────────────────────────────────────────────
+  static const Color onBackground = Color(0xFFF0F0F0); // primary text
+  static const Color onSurface = Color(0xFFB0B0B0); // secondary text
+  static const Color onSurfaceMuted = Color(0xFF666666); // hints, placeholders
+  static const Color onSurfaceDim = Color(0xFF333333); // dividers, borders
 
-  // Background Colors
-  // static const Color background = Color.fromARGB(255, 241, 241, 241);
-  static const Color background = Color(0xFFF9F9F9);
-  static const Color backgroundAccent = Color.fromARGB(255, 230, 230, 230);
-  static const Color backgroundDark = Color(0xFFE0E0E0);
-  static const Color backgroundLight = Color(0xFFFFFFFF);
-
-  // Text Colors
-  static const Color textPrimary = Color(0xFF212121);
-  static const Color textSecondary = Color(0xFF999999);
-  static const Color textDisabled = Color(0xFFBDBDBD);
-  static const Color textSubfont = Color(0xFF999999);
-
-  // Icons
-  static const Color iconPrimary = Color(0xFF757575);
-
-  // Border Colors
-  static const Color border = Color(0xFFE6E6E6);
-  static const Color gray3 = Color(0xFFE6E6E6);
-  static const Color borderDark = Color(0xFFBDBDBD);
-
-  // MISC
-  static const Color neutral4 = Color(0xFFF5F5F5);
-  static const Color neutral100 = Color(0xFFEFEFEF);
-
-  // Success, Warning, Error Colors
+  // ── Semantic ──────────────────────────────────────────────────────────────
   static const Color success = Color(0xFF4CAF50);
-  static const Color warning = Color(0xFFFFC107);
-  static const Color error = Color(0xFFFF3744);
+  static const Color warning = Color(0xFFFFB300);
+  static const Color error = Color(0xFFFF5252);
 
-  // Custom AppBar Colors
-  static const Color appBarBackground = Colors.white;
-  // static const Color appBarBackground = Color.fromARGB(255, 248, 248, 248);
-  static const Color appBarTitle = Colors.white;
-  static const Color appBarIcon = Colors.black54;
+  // ── Vault ─────────────────────────────────────────────────────────────────
+  static const Color vaultActive = Color(0xFFFF5252); // secret vault indicator
 
-  // Chart Color gae "fl_chart" plugin
-  static const Color chartRealization = Colors.green;
-  static const Color chartPlan = Colors.lightBlue;
+  // ── App bar ───────────────────────────────────────────────────────────────
+  static const Color appBarBackground = background;
+  static const Color appBarTitle = onBackground;
+  static const Color appBarIcon = onSurface;
 
-  // Button Colors
-  static const Color buttonPrimary = Color(0xFF3A927B);
-  static const Color buttonSecondary = secondary;
-  static const Color buttonDisabled = Color(0xFFE6E6E6);
-
-  // Menu Colors
-  // static const Color menuBackground = primary;
-  // static const Color menuIcon = Colors.white;
-  // static const Color menuLabel = Colors.white;
-  static const Color menuBackground = background;
-  static const Color menuBorder = background;
-  static const Color menuIcon = primary;
-  static const Color menuLabel = primary;
+  // ── Backward compat aliases ───────────────────────────────────────────────
+  static const Color secondary = surfaceHigh;
+  static const Color textPrimary = onBackground;
+  static const Color textSecondary = onSurface;
+  static const Color textDisabled = onSurfaceMuted;
+  static const Color border = onSurfaceDim;
+  static const Color backgroundAccent = surfaceHigh;
+  static const Color backgroundDark = surfaceHighest;
+  static const Color backgroundLight = surface;
+  static const Color iconPrimary = onSurfaceMuted;
+  static const Color buttonPrimary = primary;
+  static const Color buttonDisabled = surfaceHigh;
 }

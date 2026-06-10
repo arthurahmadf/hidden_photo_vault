@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:hidden_photo_vault/app/core/style/app_colors.dart';
 
 import '../controllers/vault_controller.dart';
 
@@ -14,7 +15,7 @@ class VaultView extends GetView<VaultController> {
     final textTheme = Theme.of(context).textTheme;
 
     return Scaffold(
-      backgroundColor: scheme.surface,
+      backgroundColor: AppColors.background,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -29,24 +30,24 @@ class VaultView extends GetView<VaultController> {
             const Spacer(flex: 2),
 
             // ── Icon + title ──────────────────────────────────────────────
-            Icon(
+            const Icon(
               Icons.lock_outline_rounded,
               size: 48,
-              color: scheme.primary,
+              color: AppColors.iconPrimary,
             ),
             const SizedBox(height: 16),
             Text(
               'Enter PIN',
               style: textTheme.headlineSmall?.copyWith(
                 fontWeight: FontWeight.w600,
-                color: scheme.onSurface,
+                color: AppColors.textPrimary,
               ),
             ),
             const SizedBox(height: 8),
             Text(
               'Enter your 6-digit vault PIN',
               style: textTheme.bodyMedium?.copyWith(
-                color: scheme.onSurface.withOpacity(0.5),
+                color: AppColors.textSecondary,
               ),
             ),
 
@@ -150,11 +151,7 @@ class _PinDotsState extends State<_PinDots> with SingleTickerProviderStateMixin 
             height: 16,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: filled ? scheme.primary : Colors.transparent,
-              border: Border.all(
-                color: filled ? scheme.primary : scheme.onSurface.withOpacity(0.3),
-                width: 2,
-              ),
+              color: filled ? AppColors.iconPrimary : AppColors.secondary,
             ),
           );
         }),

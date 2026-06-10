@@ -23,11 +23,11 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:hidden_photo_vault/app/core/style/app_colors.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../services/media_picker_service.dart';
 import 'media_picker_sheet.dart';
-
 
 class MediaPreviewContainer extends StatelessWidget {
   /// Current file. Null = empty state.
@@ -79,7 +79,7 @@ class MediaPreviewContainer extends StatelessWidget {
   Future<void> _openActionSheet(BuildContext context) async {
     final action = await showModalBottomSheet<_MediaAction>(
       context: context,
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppColors.secondary,
       builder: (_) => _MediaActionSheet(),
     );
 
@@ -258,13 +258,13 @@ class _Placeholder extends StatelessWidget {
           Icon(
             Icons.add_photo_alternate_outlined,
             size: 48,
-            color: scheme.onSurface.withOpacity(0.3),
+            color: AppColors.primary.withOpacity(0.3),
           ),
           const SizedBox(height: 12),
           Text(
             'Tap to add media',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: scheme.onSurface.withOpacity(0.35),
+                  color: AppColors.textPrimary,
                 ),
           ),
         ],
@@ -297,12 +297,12 @@ class _Preview extends StatelessWidget {
           Image.file(File(file.path), fit: BoxFit.cover)
         else
           Container(
-            color: scheme.surfaceContainerHighest,
+            color: AppColors.primary,
             child: Center(
               child: Icon(
                 Icons.play_circle_outline_rounded,
                 size: 64,
-                color: scheme.onSurface.withOpacity(0.4),
+                color: AppColors.primary.withOpacity(0.4),
               ),
             ),
           ),
@@ -360,7 +360,7 @@ class DashedBorderContainer extends StatelessWidget {
     super.key,
     required this.child,
     this.borderRadius = 16,
-    this.color = Colors.grey,
+    this.color = AppColors.error,
     this.dashWidth = 6,
     this.dashGap = 4,
     this.strokeWidth = 1.5,
@@ -421,7 +421,5 @@ class _DashedBorderPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(_DashedBorderPainter old) =>
-      old.color != color ||
-      old.borderRadius != borderRadius ||
-      old.strokeWidth != strokeWidth;
+      old.color != color || old.borderRadius != borderRadius || old.strokeWidth != strokeWidth;
 }

@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:hidden_photo_vault/app/core/consts/app_icons.dart';
 import 'package:hidden_photo_vault/app/core/style/app_colors.dart';
 import 'package:hidden_photo_vault/app/core/style/app_fonts.dart';
+import 'package:hidden_photo_vault/app/modules/home/views/home_appbar.dart';
 
 import '../controllers/home_controller.dart';
 
@@ -19,7 +20,7 @@ class HomeView extends GetView<HomeController> {
         backgroundColor: AppColors.secondary,
         floatingActionButton: FloatingActionButton.small(
           onPressed: () => controller.onAddMediaPressed(),
-          backgroundColor: AppColors.secondary,
+          backgroundColor: AppColors.iconPrimary,
           elevation: 3,
           child: Icon(Icons.add, size: 28.w, color: AppColors.background),
         ).paddingOnly(right: 16.w, bottom: 24.w),
@@ -29,79 +30,79 @@ class HomeView extends GetView<HomeController> {
           child: Column(
             children: [
               // ── App bar ───────────────────────────────────────────────────
-              GetBuilder<HomeController>(
-                builder: (controller) {
-                  final isPrivate = controller.selectedVault.value.id != "public";
-                  return SafeArea(
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: AppColors.secondary,
-                        border: Border(
-                          bottom: BorderSide(
-                            color: isPrivate ? Colors.red : Colors.transparent,
-                            width: 2.w,
-                          ),
-                        ),
-                      ),
-                      padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 14.w),
-                      child: Row(
-                        children: [
-                          GestureDetector(
-                            onTap: () => controller.onVaultTapped(),
-                            child: Container(
-                              padding: EdgeInsets.all(8.w),
-                              decoration: BoxDecoration(
-                                color: AppColors.background,
-                                borderRadius: BorderRadius.circular(8.r),
-                              ),
-                              child: Icon(
-                                isPrivate ? Icons.security_rounded : Icons.view_in_ar_outlined,
-                                size: 16.w,
-                                color: isPrivate ? Colors.red : AppColors.primary,
-                              ),
-                            ),
-                          ),
-                          8.horizontalSpace,
-                          Text(
-                            isPrivate ? controller.selectedVault.value.name ?? "mY Gallery (P)" : "mY Gallery",
-                            style: AppFonts.bold18.copyWith(color: AppColors.background),
-                          ),
-                          const Spacer(),
-                          Obx(() {
-                            final isPrivate = controller.selectedVault.value.id != "public";
-                            return Row(
-                              children: [
-                                // Group toggle
-                                GestureDetector(
-                                  onTap: () => controller.isGrouped.toggle(),
-                                  child: Icon(
-                                    controller.isGrouped.value ? Icons.tag : Icons.tag_outlined,
-                                    size: 20.w,
-                                    color: controller.isGrouped.value ? AppColors.success : AppColors.background,
-                                  ),
-                                ),
-                                12.horizontalSpace,
-                                GestureDetector(
-                                  onTap: () => controller.onSettingTapped(),
-                                  child: Icon(Icons.settings, size: 20.w, color: AppColors.background),
-                                ),
-                                if (isPrivate) ...[
-                                  12.horizontalSpace,
-                                  GestureDetector(
-                                    onTap: () => controller.onCloseVaultTapped(),
-                                    child: Icon(Icons.exit_to_app, size: 20.w, color: AppColors.error),
-                                  ),
-                                ],
-                              ],
-                            );
-                          }),
-                        ],
-                      ),
-                    ),
-                  );
-                },
-              ),
-
+              // GetBuilder<HomeController>(
+              //   builder: (controller) {
+              //     final isPrivate = controller.selectedVault.value.id != "public";
+              //     return SafeArea(
+              //       child: Container(
+              //         decoration: BoxDecoration(
+              //           color: AppColors.secondary,
+              //           border: Border(
+              //             bottom: BorderSide(
+              //               color: isPrivate ? Colors.red : Colors.transparent,
+              //               width: 2.w,
+              //             ),
+              //           ),
+              //         ),
+              //         padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 14.w),
+              //         child: Row(
+              //           children: [
+              //             GestureDetector(
+              //               onTap: () => controller.onVaultTapped(),
+              //               child: Container(
+              //                 padding: EdgeInsets.all(8.w),
+              //                 decoration: BoxDecoration(
+              //                   color: AppColors.background,
+              //                   borderRadius: BorderRadius.circular(8.r),
+              //                 ),
+              //                 child: Icon(
+              //                   isPrivate ? Icons.security_rounded : Icons.view_in_ar_outlined,
+              //                   size: 16.w,
+              //                   color: isPrivate ? Colors.red : AppColors.primary,
+              //                 ),
+              //               ),
+              //             ),
+              //             8.horizontalSpace,
+              //             Text(
+              //               isPrivate ? controller.selectedVault.value.name ?? "mY Gallery (P)" : "mY Gallery",
+              //               style: AppFonts.bold18.copyWith(color: AppColors.background),
+              //             ),
+              //             const Spacer(),
+              //             Obx(() {
+              //               final isPrivate = controller.selectedVault.value.id != "public";
+              //               return Row(
+              //                 children: [
+              //                   // Group toggle
+              //                   GestureDetector(
+              //                     onTap: () => controller.isGrouped.toggle(),
+              //                     child: Icon(
+              //                       controller.isGrouped.value ? Icons.tag : Icons.tag_outlined,
+              //                       size: 20.w,
+              //                       color: controller.isGrouped.value ? AppColors.success : AppColors.background,
+              //                     ),
+              //                   ),
+              //                   12.horizontalSpace,
+              //                   GestureDetector(
+              //                     onTap: () => controller.onSettingTapped(),
+              //                     child: Icon(Icons.settings, size: 20.w, color: AppColors.background),
+              //                   ),
+              //                   if (isPrivate) ...[
+              //                     12.horizontalSpace,
+              //                     GestureDetector(
+              //                       onTap: () => controller.onCloseVaultTapped(),
+              //                       child: Icon(Icons.exit_to_app, size: 20.w, color: AppColors.error),
+              //                     ),
+              //                   ],
+              //                 ],
+              //               );
+              //             }),
+              //           ],
+              //         ),
+              //       ),
+              //     );
+              //   },
+              // ),
+              const HomeAppBar(),
               // ── Body ──────────────────────────────────────────────────────
               Expanded(
                 child: GetBuilder<HomeController>(
@@ -239,13 +240,13 @@ class _TagSection extends StatelessWidget {
                 6.horizontalSpace,
                 Text(
                   tag,
-                  style: AppFonts.bold14.copyWith(color: AppColors.secondary),
+                  style: AppFonts.bold14.copyWith(color: AppColors.textPrimary),
                 ),
                 6.horizontalSpace,
                 Text(
                   '${mediaList.length}',
                   style: AppFonts.medium14.copyWith(
-                    color: AppColors.secondary.withOpacity(0.4),
+                    color: AppColors.textPrimary.withOpacity(0.4),
                   ),
                 ),
               ],

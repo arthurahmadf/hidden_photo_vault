@@ -17,10 +17,10 @@ class AppSettingView extends GetView<AppSettingController> {
         backgroundColor: AppColors.secondary,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.background, size: 18.w),
+          icon: Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.appBarTitle, size: 18.w),
           onPressed: Get.back,
         ),
-        title: Text('Settings', style: AppFonts.bold18.copyWith(color: AppColors.background)),
+        title: Text('Settings', style: AppFonts.bold18.copyWith(color: AppColors.appBarTitle)),
       ),
       body: Obx(() => ListView(
             padding: EdgeInsets.symmetric(vertical: 16.w),
@@ -105,21 +105,21 @@ class AppSettingView extends GetView<AppSettingController> {
                       Container(
                         padding: EdgeInsets.all(8.w),
                         decoration: BoxDecoration(
-                          color: AppColors.secondary.withOpacity(0.08),
+                          color: AppColors.primary.withOpacity(0.08),
                           borderRadius: BorderRadius.circular(8.r),
                         ),
-                        child: Icon(Icons.grid_view_rounded, size: 18.w, color: AppColors.secondary),
+                        child: Icon(Icons.grid_view_rounded, size: 18.w, color: AppColors.iconPrimary),
                       ),
                       12.horizontalSpace,
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text('Grid Columns', style: AppFonts.bold14.copyWith(color: AppColors.secondary)),
+                            Text('Grid Columns', style: AppFonts.bold14.copyWith(color: AppColors.textPrimary)),
                             2.verticalSpace,
                             Text('$current columns',
                                 style: AppFonts.medium14.copyWith(
-                                  color: AppColors.secondary.withOpacity(0.5),
+                                  color: AppColors.textPrimary.withOpacity(0.5),
                                   fontSize: 12,
                                 )),
                           ],
@@ -133,11 +133,11 @@ class AppSettingView extends GetView<AppSettingController> {
                             child: Container(
                               padding: EdgeInsets.all(6.w),
                               decoration: BoxDecoration(
-                                color: AppColors.secondary.withOpacity(current > 2 ? 0.08 : 0.03),
+                                color: AppColors.primary.withOpacity(current > 2 ? 0.08 : 0.03),
                                 borderRadius: BorderRadius.circular(6.r),
                               ),
                               child: Icon(Icons.remove,
-                                  size: 16.w, color: AppColors.secondary.withOpacity(current > 2 ? 1 : 0.2)),
+                                  size: 16.w, color: AppColors.iconPrimary.withOpacity(current > 2 ? 1 : 0.2)),
                             ),
                           ),
                           12.horizontalSpace,
@@ -146,11 +146,11 @@ class AppSettingView extends GetView<AppSettingController> {
                             child: Container(
                               padding: EdgeInsets.all(6.w),
                               decoration: BoxDecoration(
-                                color: AppColors.secondary.withOpacity(current < 6 ? 0.08 : 0.03),
+                                color: AppColors.primary.withOpacity(current < 6 ? 0.08 : 0.03),
                                 borderRadius: BorderRadius.circular(6.r),
                               ),
                               child: Icon(Icons.add,
-                                  size: 16.w, color: AppColors.secondary.withOpacity(current < 6 ? 1 : 0.2)),
+                                  size: 16.w, color: AppColors.iconPrimary.withOpacity(current < 6 ? 1 : 0.2)),
                             ),
                           ),
                         ],
@@ -168,21 +168,21 @@ class AppSettingView extends GetView<AppSettingController> {
                         Container(
                           padding: EdgeInsets.all(8.w),
                           decoration: BoxDecoration(
-                            color: AppColors.secondary.withOpacity(0.08),
+                            color: AppColors.primary.withOpacity(0.08),
                             borderRadius: BorderRadius.circular(8.r),
                           ),
-                          child: Icon(Icons.label_rounded, size: 18.w, color: AppColors.secondary),
+                          child: Icon(Icons.label_rounded, size: 18.w, color: AppColors.iconPrimary),
                         ),
                         12.horizontalSpace,
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text('Group by Tag', style: AppFonts.bold14.copyWith(color: AppColors.secondary)),
+                              Text('Group by Tag', style: AppFonts.bold14.copyWith(color: AppColors.textPrimary)),
                               2.verticalSpace,
                               Text('Show images grouped by tag',
                                   style: AppFonts.medium14.copyWith(
-                                    color: AppColors.secondary.withOpacity(0.5),
+                                    color: AppColors.textPrimary.withOpacity(0.5),
                                     fontSize: 12,
                                   )),
                             ],
@@ -229,10 +229,10 @@ class _ExportDirTile extends StatelessWidget {
             Container(
               padding: EdgeInsets.all(8.w),
               decoration: BoxDecoration(
-                color: AppColors.secondary.withOpacity(0.08),
+                color: AppColors.primary.withOpacity(0.08),
                 borderRadius: BorderRadius.circular(8.r),
               ),
-              child: Icon(Icons.folder_outlined, size: 18.w, color: AppColors.secondary),
+              child: Icon(Icons.folder_outlined, size: 18.w, color: AppColors.iconPrimary),
             ),
             12.horizontalSpace,
             Expanded(
@@ -241,7 +241,7 @@ class _ExportDirTile extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Export Directory', style: AppFonts.bold14.copyWith(color: AppColors.secondary)),
+                    Text('Export Directory', style: AppFonts.bold14.copyWith(color: AppColors.primary)),
                     2.verticalSpace,
                     Row(
                       children: [
@@ -249,7 +249,7 @@ class _ExportDirTile extends StatelessWidget {
                           child: Text(
                             dir,
                             style: AppFonts.medium14.copyWith(
-                              color: AppColors.secondary.withOpacity(0.5),
+                              color: AppColors.primary.withOpacity(0.5),
                               fontSize: 12,
                             ),
                             overflow: TextOverflow.ellipsis,
@@ -392,7 +392,7 @@ class _SectionHeader extends StatelessWidget {
       child: Text(
         title.toUpperCase(),
         style: AppFonts.medium14.copyWith(
-          color: AppColors.secondary.withOpacity(0.4),
+          color: AppColors.textPrimary.withOpacity(0.6),
           letterSpacing: 1.2,
           fontSize: 11,
         ),
@@ -434,22 +434,22 @@ class _SettingsTile extends StatelessWidget {
               Container(
                 padding: EdgeInsets.all(8.w),
                 decoration: BoxDecoration(
-                  color: AppColors.secondary.withOpacity(0.08),
+                  color: AppColors.primary.withOpacity(0.08),
                   borderRadius: BorderRadius.circular(8.r),
                 ),
-                child: Icon(icon, size: 18.w, color: AppColors.secondary),
+                child: Icon(icon, size: 18.w, color: AppColors.iconPrimary),
               ),
               12.horizontalSpace,
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(title, style: AppFonts.bold14.copyWith(color: AppColors.secondary)),
+                    Text(title, style: AppFonts.bold14.copyWith(color: AppColors.primary)),
                     2.verticalSpace,
                     Text(
                       subtitle,
                       style: AppFonts.medium14.copyWith(
-                        color: AppColors.secondary.withOpacity(0.5),
+                        color: AppColors.primary.withOpacity(0.5),
                         fontSize: 12,
                       ),
                     ),
@@ -457,7 +457,7 @@ class _SettingsTile extends StatelessWidget {
                 ),
               ),
               trailing ??
-                  Icon(Icons.chevron_right_rounded, size: 20.w, color: AppColors.secondary.withOpacity(0.3)),
+                  Icon(Icons.chevron_right_rounded, size: 20.w, color: AppColors.iconPrimary.withOpacity(1)),
             ],
           ),
         ),

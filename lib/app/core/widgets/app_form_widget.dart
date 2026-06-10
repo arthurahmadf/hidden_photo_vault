@@ -5,7 +5,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
-
 import '../consts/app_svg.dart';
 import '../style/app_colors.dart';
 import '../style/app_fonts.dart';
@@ -64,11 +63,11 @@ InputDecoration appInputDecoration({
     prefixIconColor: AppColors.iconPrimary,
     prefixIconConstraints: BoxConstraints(minHeight: 15.w, minWidth: 15.w),
     border: OutlineInputBorder(
-      borderSide: useBorder ? const BorderSide(color: AppColors.primary) : BorderSide.none,
+      borderSide: useBorder ? const BorderSide(color: AppColors.border) : BorderSide.none,
       borderRadius: BorderRadius.circular(8.r),
     ),
     enabledBorder: OutlineInputBorder(
-      borderSide: useBorder ? const BorderSide(color: Color(0xFFE6E6E6)) : BorderSide.none,
+      borderSide: useBorder ? const BorderSide(color: AppColors.border) : BorderSide.none,
       borderRadius: BorderRadius.circular(8.r),
     ),
     focusedBorder: OutlineInputBorder(
@@ -200,7 +199,7 @@ class AppTextField extends StatelessWidget {
       },
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.secondary,
           borderRadius: BorderRadius.circular(6.r),
         ),
         // padding: padding ?? AppDimension.containerPadding,
