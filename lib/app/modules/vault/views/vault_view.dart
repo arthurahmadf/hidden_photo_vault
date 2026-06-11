@@ -1,8 +1,10 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:hidden_photo_vault/app/core/style/app_colors.dart';
+import 'package:hidden_photo_vault/app/core/style/app_fonts.dart';
 
 import '../controllers/vault_controller.dart';
 
@@ -15,7 +17,7 @@ class VaultView extends GetView<VaultController> {
     final textTheme = Theme.of(context).textTheme;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: AppColors.secondary,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -30,18 +32,15 @@ class VaultView extends GetView<VaultController> {
             const Spacer(flex: 2),
 
             // ── Icon + title ──────────────────────────────────────────────
-            const Icon(
+            Icon(
               Icons.lock_outline_rounded,
-              size: 48,
+              size: 68.w,
               color: AppColors.iconPrimary,
             ),
             const SizedBox(height: 16),
             Text(
               'Enter PIN',
-              style: textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.w600,
-                color: AppColors.textPrimary,
-              ),
+              style: AppFonts.bold24.copyWith(color: AppColors.textPrimary),
             ),
             const SizedBox(height: 8),
             Text(
@@ -151,7 +150,8 @@ class _PinDotsState extends State<_PinDots> with SingleTickerProviderStateMixin 
             height: 16,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: filled ? AppColors.iconPrimary : AppColors.secondary,
+              border: Border.all(width: .5.w, color: Colors.white),
+              color: filled ? AppColors.primary : AppColors.secondary,
             ),
           );
         }),

@@ -216,7 +216,7 @@ class _ActionOption extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 20),
         decoration: BoxDecoration(
-          color: scheme.surfaceContainerHighest,
+          color: AppColors.primary,
           borderRadius: BorderRadius.circular(16),
         ),
         child: Column(
@@ -251,7 +251,7 @@ class _Placeholder extends StatelessWidget {
   Widget build(BuildContext context) {
     return DashedBorderContainer(
       borderRadius: borderRadius,
-      color: scheme.outline.withOpacity(0.4),
+      color: AppColors.primary,
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [

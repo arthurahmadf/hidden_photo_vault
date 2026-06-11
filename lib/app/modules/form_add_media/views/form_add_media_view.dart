@@ -17,7 +17,11 @@ class FormAddMediaView extends GetView<FormAddMediaController> {
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
       child: Scaffold(
-        appBar: const AppBarCustom(title: "New Media"),
+        backgroundColor: AppColors.secondary,
+        appBar: const AppBarCustom(
+          title: "New Media",
+          backgroundColor: AppColors.secondary,
+        ),
         body: Container(
           width: 1.sw,
           height: 1.sh,
@@ -75,16 +79,62 @@ class FormAddMediaView extends GetView<FormAddMediaController> {
                   ] else ...[
                     12.verticalSpace,
                     Text(
-                      "No image selected yet\n\nPick a media from your camera or gallery to continue.",
+                      "Pick a media from your camera or gallery to continue.",
                       style: AppFonts.medium16.copyWith(color: AppColors.textPrimary),
                       textAlign: TextAlign.center,
-                    )
+                    ),
+                    20.verticalSpace,
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const _HintChip(icon: Icons.photo_library_outlined, label: 'Gallery'),
+                        10.horizontalSpace,
+                        const _HintChip(icon: Icons.camera_alt_outlined, label: 'Camera'),
+                        10.horizontalSpace,
+                        const _HintChip(icon: Icons.link_rounded, label: 'URL'),
+                      ],
+                    ),
                   ],
                 ],
               );
             },
           ),
         ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Hint chip
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _HintChip extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  const _HintChip({required this.icon, required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.w),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20.r),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 13.w, color: AppColors.onSurfaceMuted),
+          6.horizontalSpace,
+          Text(
+            label,
+            style: AppFonts.medium14.copyWith(
+              color: AppColors.onSurfaceMuted,
+              fontSize: 12,
+            ),
+          ),
+        ],
       ),
     );
   }

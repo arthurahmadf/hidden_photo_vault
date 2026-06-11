@@ -17,7 +17,7 @@ class HomeView extends GetView<HomeController> {
       canPop: false,
       onPopInvoked: (didPop) => controller.onBackPressed(didPop, context),
       child: Scaffold(
-        backgroundColor: AppColors.secondary,
+        backgroundColor: AppColors.backgroundAccent,
         floatingActionButton: FloatingActionButton.small(
           onPressed: () => controller.onAddMediaPressed(),
           backgroundColor: AppColors.iconPrimary,
@@ -108,7 +108,7 @@ class HomeView extends GetView<HomeController> {
                 child: GetBuilder<HomeController>(
                   builder: (_) {
                     return Container(
-                      color: AppColors.background,
+                      color: AppColors.secondary,
                       child: Obx(() {
                         final images = controller.images;
                         return Column(
@@ -161,7 +161,7 @@ class _FlatGrid extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Obx(() => GridView.builder(
-          padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 6.w),
+          padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.w),
           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: controller.gridCount.value,
             crossAxisSpacing: 6.w,
@@ -191,9 +191,13 @@ class _GroupedGrid extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final grouped = controller.groupedImages;
+    final onlyDefault = grouped.length == 1 && grouped.containsKey('default');
 
     return ListView.builder(
-      padding: EdgeInsets.only(top: 12.w, bottom: 100.w),
+      padding: EdgeInsets.only(
+        top: onlyDefault ? 12.w : 6.w,
+        bottom: 100.w,
+      ),
       itemCount: grouped.length,
       itemBuilder: (context, sectionIndex) {
         final tag = grouped.keys.elementAt(sectionIndex);
@@ -255,7 +259,7 @@ class _TagSection extends StatelessWidget {
 
         // Grid
         Obx(() => GridView.builder(
-              padding: EdgeInsets.symmetric(horizontal: 6.w),
+              padding: EdgeInsets.symmetric(horizontal: 12.w),
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
@@ -332,11 +336,22 @@ class _EmptyState extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Image.asset(AppIcons.no_image, width: .3.sw),
-          12.verticalSpace,
+          Container(
+            padding: EdgeInsets.all(20.w),
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              shape: BoxShape.circle,
+            ),
+            child: Image.asset(
+              AppIcons.no_image,
+              width: .2.sw,
+              color: AppColors.iconPrimary,
+            ),
+          ),
+          24.verticalSpace,
           Text(
             "Nothing here yet. Capture or upload your first photo to start building your gallery.",
-            style: AppFonts.medium14,
+            style: AppFonts.medium14.copyWith(color: AppColors.textPrimary),
             textAlign: TextAlign.center,
           ),
         ],

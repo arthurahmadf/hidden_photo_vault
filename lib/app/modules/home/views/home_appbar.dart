@@ -69,7 +69,7 @@ class _HomeAppBarState extends State<HomeAppBar> with SingleTickerProviderStateM
                 ),
               ),
             ),
-            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.w),
+            padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.w),
             child: Row(
               children: [
                 // ── Vault icon ────────────────────────────────────────────

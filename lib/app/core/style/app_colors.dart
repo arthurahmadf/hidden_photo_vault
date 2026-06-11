@@ -4,7 +4,7 @@ abstract class AppColors {
   // ── Surfaces (dark grey hierarchy) ───────────────────────────────────────
   static const Color background = Color(0xFF141414); // scaffold, deepest
   static const Color surface = Color(0xFF1E1E1E); // cards, sheets
-  static const Color surfaceHigh = Color(0xFF262626); // inputs, tiles
+  static const Color surfaceHigh = Color.fromARGB(255, 53, 53, 53); // inputs, tiles
   static const Color surfaceHighest = Color(0xFF2E2E2E); // elevated elements
 
   // ── Accent ────────────────────────────────────────────────────────────────
