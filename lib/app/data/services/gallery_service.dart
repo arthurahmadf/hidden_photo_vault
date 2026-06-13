@@ -11,6 +11,7 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:encrypt/encrypt.dart' as aes;
+import 'package:flutter/foundation.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:hidden_photo_vault/app/data/models/gallery_media_model.dart';
 import 'package:path/path.dart' as p;
@@ -19,6 +20,26 @@ import 'package:uuid/uuid.dart';
 
 import '../../core/services/data_service.dart';
 import '../../core/services/media_picker_service.dart';
+
+class _DecryptParams {
+  final Uint8List bytes;
+  final String key;
+  const _DecryptParams(this.bytes, this.key);
+}
+
+Uint8List _decryptIsolate(_DecryptParams params) {
+  // same AES-CBC logic as _decrypt
+  final aesKey = aes.Key.fromUtf8(_padKey(params.key));
+  final iv = aes.IV(params.bytes.sublist(0, 16));
+  final ciphertext = aes.Encrypted(params.bytes.sublist(16));
+  final encrypter = aes.Encrypter(aes.AES(aesKey, mode: aes.AESMode.cbc));
+  return Uint8List.fromList(encrypter.decryptBytes(ciphertext, iv: iv));
+}
+
+String _padKey(String key) {
+  if (key.length >= 32) return key.substring(0, 32);
+  return key.padRight(32, '0');
+}
 
 class GalleryService {
   static const _uuid = Uuid();
@@ -120,22 +141,17 @@ class GalleryService {
 
   /// Decrypt and return thumbnail bytes for grid display.
   /// Pass [encryptionKey] matching the one used at insert time.
-  Future<Uint8List> loadThumb(
-    GalleryMedia image, {
-    String encryptionKey = publicKey,
-  }) async {
-    final encBytes = await File(image.thumbPath!).readAsBytes();
-    return _decrypt(encBytes, encryptionKey);
+  Future<Uint8List> loadThumb(GalleryMedia media, {String encryptionKey = publicKey}) async {
+    final encBytes = await File(media.thumbPath!).readAsBytes();
+    return await compute(_decryptIsolate, _DecryptParams(encBytes, encryptionKey));
   }
 
   /// Decrypt and return full image bytes for the viewer.
   /// Pass [encryptionKey] matching the one used at insert time.
-  Future<Uint8List> loadFull(
-    GalleryMedia image, {
-    String encryptionKey = publicKey,
-  }) async {
-    final encBytes = await File(image.filePath!).readAsBytes();
-    return _decrypt(encBytes, encryptionKey);
+  Future<Uint8List> loadFull(GalleryMedia media, {String encryptionKey = publicKey}) async {
+    final encBytes = await File(media.filePath!).readAsBytes();
+    // run decrypt off main thread
+    return await compute(_decryptIsolate, _DecryptParams(encBytes, encryptionKey));
   }
 
   // ── Private ─────────────────────────────────────────────────────────────────

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -21,6 +22,7 @@ class MediaViewerController extends GetxController {
   final isEditingTag = false.obs;
   late final TextEditingController tagTextController;
   final isZoomed = false.obs;
+  int preloadValue = 3;
 
   // Cache: id → decrypted full bytes
   final _cache = <String, Uint8List>{};
@@ -32,6 +34,13 @@ class MediaViewerController extends GetxController {
     currentIndex.value = args.initialIndex;
     pageController = PageController(initialPage: args.initialIndex);
     tagTextController = TextEditingController();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      for (int i = 1; i <= preloadValue; i++) {
+        unawaited(_preload(currentIndex.value - i));
+        unawaited(_preload(currentIndex.value + i));
+      }
+    });
 
     // Hide status bar for immersive view
     // SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
@@ -85,8 +94,10 @@ class MediaViewerController extends GetxController {
   void onPageChanged(int index) {
     currentIndex.value = index;
     // Preload adjacent images
-    _preload(index - 1);
-    _preload(index + 1);
+    for (int i = 1; i <= preloadValue; i++) {
+      unawaited(_preload(index - i));
+      unawaited(_preload(index + i));
+    }
   }
 
   Future<void> _preload(int index) async {

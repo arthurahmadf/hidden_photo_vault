@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
@@ -132,7 +134,8 @@ class HomeController extends GetxController with WidgetsBindingObserver {
     update();
   }
 
-  void onMediaTapped(GalleryMedia mediaMeta, int index) {
+  void onMediaTapped(GalleryMedia mediaMeta, int index) async {
+    unawaited(gs.loadFull(mediaMeta, encryptionKey: activeEncKey));
     Get.toNamed(Routes.MEDIA_VIEWER, arguments: ViewMediaArgument(initialIndex: index));
   }
 

@@ -197,6 +197,7 @@ class _UrlInputState extends State<_UrlInput> {
       final response = await http.Client().send(request);
 
       if (response.statusCode != 200) {
+        closeDialog();
         throw Exception(
           'Failed to fetch (${response.statusCode})',
         );
@@ -267,7 +268,7 @@ class _UrlInputState extends State<_UrlInput> {
 
       setState(() => _loading = false);
       _progress.value = 0;
-
+      closeDialog();
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
