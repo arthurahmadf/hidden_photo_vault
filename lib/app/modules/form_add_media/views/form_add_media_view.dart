@@ -12,15 +12,16 @@ import '../controllers/form_add_media_controller.dart';
 
 class FormAddMediaView extends GetView<FormAddMediaController> {
   const FormAddMediaView({super.key});
+
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
       child: Scaffold(
-        backgroundColor: AppColors.secondary,
+        backgroundColor: AppColors.background,
         appBar: const AppBarCustom(
           title: "New Media",
-          backgroundColor: AppColors.secondary,
+          backgroundColor: AppColors.background,
         ),
         body: Container(
           width: 1.sw,
@@ -35,7 +36,7 @@ class FormAddMediaView extends GetView<FormAddMediaController> {
                 children: [
                   MediaPreviewContainer(
                     mediaType: controller.mediaType,
-                    pickType: MediaType.image,
+                    pickType: MediaType.any,
                     file: controller.file,
                     borderRadius: 8.r,
                     onChanged: (result) {
@@ -48,7 +49,8 @@ class FormAddMediaView extends GetView<FormAddMediaController> {
                   if (controller.file != null) ...[
                     Text(
                       controller.file?.name ?? "-",
-                      style: AppFonts.medium14.copyWith(color: AppColors.textPrimary),
+                      style: AppFonts.medium14
+                          .copyWith(color: AppColors.textPrimary),
                     ),
                     8.verticalSpace,
                     Text(
@@ -58,7 +60,9 @@ class FormAddMediaView extends GetView<FormAddMediaController> {
                       ),
                     ),
                     12.verticalSpace,
-                    AppTextField(controller: controller.tagTextController, hintText: "Insert Tag (Optional)"),
+                    AppTextField(
+                        controller: controller.tagTextController,
+                        hintText: "Insert Tag (Optional)"),
                     const Spacer(),
                     GestureDetector(
                       onTap: controller.onSaveMediaPressed,
@@ -66,13 +70,16 @@ class FormAddMediaView extends GetView<FormAddMediaController> {
                         width: 1.sw,
                         padding: EdgeInsets.symmetric(vertical: 12.w),
                         decoration: BoxDecoration(
-                          color: AppColors.secondary,
+                          color: AppColors
+                              .buttonPrimary, // Distinct visual weight for the main action
                           borderRadius: BorderRadius.circular(8.r),
                         ),
                         child: Text(
                           "Save Media",
                           textAlign: TextAlign.center,
-                          style: AppFonts.medium14.copyWith(color: AppColors.textPrimary),
+                          style: AppFonts.medium14.copyWith(
+                              color: AppColors
+                                  .background), // Dark text on light button
                         ),
                       ),
                     )
@@ -80,16 +87,23 @@ class FormAddMediaView extends GetView<FormAddMediaController> {
                     12.verticalSpace,
                     Text(
                       "Pick a media from your camera or gallery to continue.",
-                      style: AppFonts.medium16.copyWith(color: AppColors.textPrimary),
+                      style: AppFonts.medium16
+                          .copyWith(color: AppColors.textPrimary),
                       textAlign: TextAlign.center,
                     ),
                     20.verticalSpace,
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const _HintChip(icon: Icons.photo_library_outlined, label: 'Gallery'),
+                        const _HintChip(
+                            icon: Icons.photo_library_outlined,
+                            label: 'Gallery'),
                         10.horizontalSpace,
-                        const _HintChip(icon: Icons.camera_alt_outlined, label: 'Camera'),
+                        const _HintChip(
+                            icon: Icons.camera_alt_outlined, label: 'Camera'),
+                        10.horizontalSpace,
+                        const _HintChip(
+                            icon: Icons.videocam_outlined, label: 'Video'),
                         10.horizontalSpace,
                         const _HintChip(icon: Icons.link_rounded, label: 'URL'),
                       ],
@@ -119,18 +133,18 @@ class _HintChip extends StatelessWidget {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.w),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surfaceHighest,
         borderRadius: BorderRadius.circular(20.r),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 13.w, color: AppColors.onSurfaceMuted),
+          Icon(icon, size: 13.w, color: AppColors.onSurface),
           6.horizontalSpace,
           Text(
             label,
             style: AppFonts.medium14.copyWith(
-              color: AppColors.onSurfaceMuted,
+              color: AppColors.onSurface,
               fontSize: 12,
             ),
           ),

@@ -196,6 +196,9 @@ class VaultService {
             'fullSize': fullFile.lengthSync(),
             'thumbSize': thumbFile.lengthSync(),
             'tag': m.tag ?? 'default',
+            'durationMs': m.durationMs,
+            'width': m.width,
+            'height': m.height,
           };
         }).toList(),
       };
@@ -312,6 +315,9 @@ class VaultService {
           importedAt: meta['importedAt'] != null ? DateTime.parse(meta['importedAt']) : DateTime.now(),
           vaultId: vault.id,
           tag: meta['tag'] ?? 'default',
+          durationMs: meta['durationMs'],
+          width: meta['width'],
+          height: meta['height'],
         );
         await DataService.gallery.put(id, image);
       }

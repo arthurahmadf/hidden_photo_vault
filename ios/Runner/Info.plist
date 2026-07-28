@@ -24,6 +24,12 @@
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>Allow access to capture photos and videos for your vault.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Allow microphone access when recording videos for your vault.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Allow access to select photos, GIFs, and videos for your vault.</string>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
 	<key>UIMainStoryboardFile</key>

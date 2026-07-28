@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:hidden_photo_vault/app/core/consts/app_icons.dart';
 import 'package:hidden_photo_vault/app/core/style/app_colors.dart';
 import 'package:hidden_photo_vault/app/core/style/app_fonts.dart';
+import 'package:hidden_photo_vault/app/data/models/gallery_media_model.dart';
 import 'package:hidden_photo_vault/app/modules/home/views/home_appbar.dart';
 
 import '../controllers/home_controller.dart';
@@ -17,7 +18,7 @@ class HomeView extends GetView<HomeController> {
       canPop: false,
       onPopInvoked: (didPop) => controller.onBackPressed(didPop, context),
       child: Scaffold(
-        backgroundColor: AppColors.backgroundAccent,
+        backgroundColor: AppColors.background,
         floatingActionButton: FloatingActionButton.small(
           onPressed: () => controller.onAddMediaPressed(),
           backgroundColor: AppColors.iconPrimary,
@@ -218,7 +219,7 @@ class _GroupedGrid extends StatelessWidget {
 
 class _TagSection extends StatelessWidget {
   final String tag;
-  final List mediaList;
+  final List<GalleryMedia> mediaList;
   final HomeController controller;
 
   const _TagSection({
@@ -290,7 +291,7 @@ class _TagSection extends StatelessWidget {
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _GridTile extends StatelessWidget {
-  final dynamic media;
+  final GalleryMedia media;
   final int globalIndex;
   final HomeController controller;
 
@@ -306,7 +307,7 @@ class _GridTile extends StatelessWidget {
     if (bytes == null) {
       return ClipRRect(
         borderRadius: BorderRadius.circular(4.r),
-        child: Container(color: Colors.grey.shade200),
+        child: Container(color: AppColors.surfaceHigh),
       );
     }
     return GestureDetector(
@@ -315,7 +316,68 @@ class _GridTile extends StatelessWidget {
         tag: "media_${media.id}",
         child: ClipRRect(
           borderRadius: BorderRadius.circular(4.r),
-          child: Image.memory(bytes, fit: BoxFit.cover),
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              ColoredBox(
+                color: AppColors.surface,
+                child: Image.memory(bytes, fit: BoxFit.cover),
+              ),
+              if (media.isVideo) ...[
+                const ColoredBox(color: Colors.black26),
+                Center(
+                  child: Container(
+                    padding: EdgeInsets.all(6.w),
+                    decoration: const BoxDecoration(
+                      color: Colors.black54,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      Icons.play_arrow_rounded,
+                      color: Colors.white,
+                      size: 24.w,
+                    ),
+                  ),
+                ),
+                if (media.durationMs != null)
+                  Positioned(
+                    right: 5.w,
+                    bottom: 4.w,
+                    child: Text(
+                      _formatMediaDuration(media.durationMs!),
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 10.sp,
+                        fontWeight: FontWeight.w600,
+                        shadows: const [
+                          Shadow(color: Colors.black, blurRadius: 3),
+                        ],
+                      ),
+                    ),
+                  ),
+              ] else if (media.isGif)
+                Positioned(
+                  top: 5.w,
+                  right: 5.w,
+                  child: Container(
+                    padding:
+                        EdgeInsets.symmetric(horizontal: 5.w, vertical: 2.w),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withOpacity(0.4),
+                      borderRadius: BorderRadius.circular(4.r),
+                    ),
+                    child: Text(
+                      'GIF',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 9.sp,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
         ),
       ),
     );
@@ -339,7 +401,7 @@ class _EmptyState extends StatelessWidget {
           Container(
             padding: EdgeInsets.all(20.w),
             decoration: const BoxDecoration(
-              color: Colors.white,
+              color: AppColors.surfaceHighest,
               shape: BoxShape.circle,
             ),
             child: Image.asset(
@@ -350,7 +412,7 @@ class _EmptyState extends StatelessWidget {
           ),
           24.verticalSpace,
           Text(
-            "Nothing here yet. Capture or upload your first photo to start building your gallery.",
+            "Nothing here yet. Capture or upload your first photo, GIF, or video.",
             style: AppFonts.medium14.copyWith(color: AppColors.textPrimary),
             textAlign: TextAlign.center,
           ),
@@ -358,4 +420,12 @@ class _EmptyState extends StatelessWidget {
       ),
     );
   }
+}
+
+String _formatMediaDuration(int milliseconds) {
+  final duration = Duration(milliseconds: milliseconds);
+  final hours = duration.inHours;
+  final minutes = duration.inMinutes.remainder(60).toString().padLeft(2, '0');
+  final seconds = duration.inSeconds.remainder(60).toString().padLeft(2, '0');
+  return hours > 0 ? '$hours:$minutes:$seconds' : '$minutes:$seconds';
 }

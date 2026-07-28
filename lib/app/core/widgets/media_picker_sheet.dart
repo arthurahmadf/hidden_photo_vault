@@ -14,9 +14,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:hidden_photo_vault/app/core/helpers/dialog_helper.dart';
+import 'package:hidden_photo_vault/app/core/style/app_colors.dart';
 import 'package:hidden_photo_vault/app/core/style/app_fonts.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
+import 'package:mime/mime.dart';
+import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
 import '../services/dialog_service.dart';
@@ -61,85 +64,101 @@ class _MediaSourceSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
-
     return Container(
       decoration: BoxDecoration(
-        color: scheme.surface,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        color: AppColors.surface, // Uses your dark surface color
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
       ),
       padding: EdgeInsets.fromLTRB(
-        24,
-        16,
-        24,
-        32 + MediaQuery.of(context).viewInsets.bottom,
+        24.w,
+        16.w,
+        24.w,
+        32.w + MediaQuery.of(context).viewInsets.bottom,
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           // Drag handle
           Container(
-            width: 40,
-            height: 4,
+            width: 40.w,
+            height: 4.w,
             decoration: BoxDecoration(
-              color: scheme.onSurface.withOpacity(0.2),
-              borderRadius: BorderRadius.circular(2),
+              color: AppColors.onSurfaceDim,
+              borderRadius: BorderRadius.circular(2.r),
             ),
           ),
-          const SizedBox(height: 20),
+          20.verticalSpace,
 
           // Title
           Text(
             _title,
-            style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+            style: AppFonts.bold18.copyWith(color: AppColors.onBackground),
           ),
-          const SizedBox(height: 24),
+          24.verticalSpace,
 
-          // Options row
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(
                 child: _SourceOption(
                   icon: Icons.photo_library_outlined,
                   label: 'Gallery',
                   onTap: () async {
-                    final result = await MediaPickerService.instance.pickFromGallery(type);
+                    final result =
+                        await MediaPickerService.instance.pickFromGallery(type);
                     if (context.mounted) Navigator.pop(context, result);
                   },
                 ),
               ),
-              const SizedBox(width: 16),
+              10.horizontalSpace,
               Expanded(
                 child: _SourceOption(
                   icon: Icons.camera_alt_outlined,
-                  label: 'Camera',
+                  label: type == MediaType.video ? 'Record' : 'Photo',
                   onTap: () async {
-                    final result = await MediaPickerService.instance.pickFromCamera(type);
+                    final captureType = type == MediaType.video
+                        ? MediaType.video
+                        : MediaType.image;
+                    final result = await MediaPickerService.instance
+                        .pickFromCamera(captureType);
                     if (context.mounted) Navigator.pop(context, result);
                   },
                 ),
               ),
+              if (type == MediaType.any) ...[
+                10.horizontalSpace,
+                Expanded(
+                  child: _SourceOption(
+                    icon: Icons.videocam_outlined,
+                    label: 'Video',
+                    onTap: () async {
+                      final result = await MediaPickerService.instance
+                          .pickFromCamera(MediaType.video);
+                      if (context.mounted) Navigator.pop(context, result);
+                    },
+                  ),
+                ),
+              ],
             ],
           ),
           16.verticalSpace,
           Text(
             "----- or -----",
-            style: AppFonts.regular14.copyWith(color: Colors.grey),
+            style: AppFonts.regular14.copyWith(color: AppColors.onSurfaceMuted),
           ),
           16.verticalSpace,
+
           // ── From URL ──────────────────────────────────────────
           _UrlInput(type: type),
-          const SizedBox(height: 16),
+          16.verticalSpace,
 
           // Cancel
           TextButton(
             onPressed: () => Navigator.pop(context, null),
             child: Text(
               'Cancel',
-              style: textTheme.bodyMedium?.copyWith(
-                color: scheme.onSurface.withOpacity(0.5),
-              ),
+              style:
+                  AppFonts.medium14.copyWith(color: AppColors.onSurfaceMuted),
             ),
           ),
         ],
@@ -159,18 +178,21 @@ class _UrlInput extends StatefulWidget {
 class _UrlInputState extends State<_UrlInput> {
   final _tc = TextEditingController();
   bool _loading = false;
+  String? _errorText; // Added to track error state
 
   @override
   void initState() {
     super.initState();
-    // _autoPaste();
   }
 
   Future<void> _autoPaste() async {
     final data = await Clipboard.getData(Clipboard.kTextPlain);
     final text = data?.text ?? '';
     if (text.startsWith('http://') || text.startsWith('https://')) {
-      setState(() => _tc.text = text);
+      setState(() {
+        _tc.text = text;
+        _errorText = null; // Clear error on new paste
+      });
     }
   }
 
@@ -182,6 +204,8 @@ class _UrlInputState extends State<_UrlInput> {
 
     setState(() {
       _loading = true;
+      _errorText =
+          null; // Clear any previous errors when starting a new request
       _progress.value = 0;
     });
 
@@ -203,58 +227,61 @@ class _UrlInputState extends State<_UrlInput> {
         );
       }
 
-      final contentType = response.headers['content-type']?.toLowerCase() ?? '';
-
-      // Determine extension from content type
-      String ext;
-
-      if (contentType.contains('png')) {
-        ext = 'png';
-      } else if (contentType.contains('jpeg') || contentType.contains('jpg')) {
-        ext = 'jpg';
-      } else if (contentType.contains('webp')) {
-        ext = 'webp';
-      } else if (contentType.contains('gif')) {
-        ext = 'gif';
-      } else {
-        // Fallback to final redirected URL
-        final finalUrl = response.request?.url.toString() ?? url;
-
-        final uri = Uri.parse(finalUrl);
-        final path = uri.path;
-
-        if (path.contains('.')) {
-          ext = path.split('.').last;
-        } else {
-          ext = 'jpg';
-        }
-      }
+      final contentType =
+          response.headers['content-type']?.split(';').first.toLowerCase() ??
+              '';
+      final finalUrl = response.request?.url.toString() ?? url;
+      final ext = _extensionFor(contentType, finalUrl);
 
       final contentLength = response.contentLength ?? 0;
-      final bytes = <int>[];
+      final cacheDir = await getTemporaryDirectory();
+      final fileName = 'url_${DateTime.now().millisecondsSinceEpoch}.$ext';
+      final tempFile = File(p.join(cacheDir.path, fileName));
+      final sink = tempFile.openWrite();
+      final headerBytes = <int>[];
+      var received = 0;
 
       await for (final chunk in response.stream) {
-        bytes.addAll(chunk);
+        sink.add(chunk);
+        received += chunk.length;
+        if (headerBytes.length < 64) {
+          headerBytes.addAll(chunk.take(64 - headerBytes.length));
+        }
 
         if (contentLength > 0) {
-          _progress.value = bytes.length / contentLength;
+          _progress.value = received / contentLength;
         }
       }
+      await sink.flush();
+      await sink.close();
 
-      final cacheDir = await getTemporaryDirectory();
+      final detectedMime =
+          lookupMimeType(tempFile.path, headerBytes: headerBytes);
+      final suppliedIsMedia =
+          contentType.startsWith('image/') || contentType.startsWith('video/');
+      final detectedIsMedia = detectedMime?.startsWith('image/') == true ||
+          detectedMime?.startsWith('video/') == true;
+      if (!suppliedIsMedia && !detectedIsMedia) {
+        await tempFile.delete();
+        throw const FormatException('The URL did not return a media file.');
+      }
 
-      final fileName = 'url_${DateTime.now().millisecondsSinceEpoch}.$ext';
-
-      final tempFile = File('${cacheDir.path}/$fileName');
-
-      await tempFile.writeAsBytes(
-        bytes,
-        flush: true,
+      final resolvedType = resolveMediaType(
+        tempFile.path,
+        mimeType: suppliedIsMedia ? contentType : detectedMime,
+        headerBytes: headerBytes,
       );
+      if (widget.type != MediaType.any && widget.type != resolvedType) {
+        await tempFile.delete();
+        throw const FormatException('The URL returned a different media type.');
+      }
 
       final result = MediaPickResult.success(
-        XFile(tempFile.path),
-        MediaType.image,
+        XFile(
+          tempFile.path,
+          mimeType: suppliedIsMedia ? contentType : detectedMime,
+        ),
+        resolvedType,
       );
 
       closeDialog();
@@ -266,30 +293,25 @@ class _UrlInputState extends State<_UrlInput> {
       debugPrint('URL download error: $e');
       debugPrintStack(stackTrace: s);
 
-      setState(() => _loading = false);
+      // Replaced the ScaffoldMessenger with an inline error state
+      setState(() {
+        _loading = false;
+        _errorText = 'Failed to load media. Use a direct image or video URL.';
+      });
       _progress.value = 0;
       closeDialog();
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Failed to load image from URL\n$e',
-            ),
-          ),
-        );
-      }
     }
   }
 
   @override
   void dispose() {
     _tc.dispose();
+    _progress.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -299,24 +321,36 @@ class _UrlInputState extends State<_UrlInput> {
             controller: _tc,
             readOnly: true, // ← no keyboard ever
             onSubmitted: (_) => _submit(),
+            style: AppFonts.medium14.copyWith(color: AppColors.onBackground),
             decoration: InputDecoration(
-              hintText: 'Paste image URL...',
-              hintStyle: TextStyle(color: scheme.onSurface.withOpacity(0.35), fontSize: 13),
+              hintText: 'Paste a direct media URL...',
+              hintStyle:
+                  AppFonts.regular14.copyWith(color: AppColors.onSurfaceMuted),
               filled: true,
-              fillColor: scheme.surfaceContainerHighest,
+              fillColor: AppColors
+                  .surfaceHigh, // Replaced standard surfaceContainerHighest
               isDense: true,
-              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+              contentPadding:
+                  EdgeInsets.symmetric(horizontal: 12.w, vertical: 12.w),
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(12.r),
                 borderSide: BorderSide.none,
+              ),
+              // Optional: Highlight the border in red if there is an error
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12.r),
+                borderSide: _errorText != null
+                    ? const BorderSide(color: AppColors.error, width: 1)
+                    : BorderSide.none,
               ),
               suffixIcon: _loading
                   ? Padding(
-                      padding: const EdgeInsets.all(10),
+                      padding: EdgeInsets.all(10.w),
                       child: SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: CircularProgressIndicator(strokeWidth: 2, color: scheme.primary),
+                        width: 16.w,
+                        height: 16.w,
+                        child: const CircularProgressIndicator(
+                            strokeWidth: 2, color: AppColors.primary),
                       ),
                     )
                   : Row(
@@ -325,13 +359,14 @@ class _UrlInputState extends State<_UrlInput> {
                         // paste button
                         IconButton(
                           icon: Icon(Icons.content_paste_rounded,
-                              color: scheme.onSurface.withOpacity(0.5), size: 18),
+                              color: AppColors.onSurfaceMuted, size: 18.w),
                           onPressed: _autoPaste,
                         ),
                         // submit button — only show when text is not empty
                         if (_tc.text.isNotEmpty)
                           IconButton(
-                            icon: Icon(Icons.check_circle_outline_rounded, color: scheme.primary),
+                            icon: const Icon(Icons.check_circle_outline_rounded,
+                                color: AppColors.primary),
                             onPressed: _submit,
                           ),
                       ],
@@ -340,29 +375,43 @@ class _UrlInputState extends State<_UrlInput> {
           ),
         ),
 
+        // ── Error Label ──────────────────────────────────────────────────
+        if (_errorText != null) ...[
+          8.verticalSpace,
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Text(
+              _errorText!,
+              style: AppFonts.regular14.copyWith(color: AppColors.error),
+            ),
+          ),
+        ],
+
         // progress bar — only shown when loading
         if (_loading) ...[
-          const SizedBox(height: 8),
+          8.verticalSpace,
           ValueListenableBuilder<double>(
             valueListenable: _progress,
             builder: (_, value, __) => Column(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 ClipRRect(
-                  borderRadius: BorderRadius.circular(4),
+                  borderRadius: BorderRadius.circular(4.r),
                   child: LinearProgressIndicator(
                     value: value == 0 ? null : value,
-                    backgroundColor: scheme.surfaceContainerHighest,
-                    color: scheme.primary,
-                    minHeight: 4,
+                    backgroundColor: AppColors.surfaceHigh,
+                    color: AppColors.primary,
+                    minHeight: 4.w,
                   ),
                 ),
-                const SizedBox(height: 4),
+                4.verticalSpace,
                 Text(
-                  value == 0 ? 'Connecting...' : '${(value * 100).toStringAsFixed(0)}%',
-                  style: TextStyle(
+                  value == 0
+                      ? 'Connecting...'
+                      : '${(value * 100).toStringAsFixed(0)}%',
+                  style: AppFonts.regular14.copyWith(
                     fontSize: 11,
-                    color: scheme.onSurface.withOpacity(0.5),
+                    color: AppColors.onSurfaceMuted,
                   ),
                 ),
               ],
@@ -378,6 +427,34 @@ class _UrlInputState extends State<_UrlInput> {
 // Option tile (private)
 // ─────────────────────────────────────────────────────────────────────────────
 
+String _extensionFor(String mimeType, String url) {
+  const byMime = <String, String>{
+    'image/jpeg': 'jpg',
+    'image/png': 'png',
+    'image/gif': 'gif',
+    'image/webp': 'webp',
+    'image/heic': 'heic',
+    'video/mp4': 'mp4',
+    'video/mpeg': 'mpeg',
+    'video/quicktime': 'mov',
+    'video/x-matroska': 'mkv',
+    'video/webm': 'webm',
+    'video/x-msvideo': 'avi',
+    'video/x-ms-wmv': 'wmv',
+  };
+
+  final mapped = byMime[mimeType.toLowerCase()];
+  if (mapped != null) return mapped;
+
+  final urlExtension =
+      p.extension(Uri.parse(url).path).replaceFirst('.', '').toLowerCase();
+  if (urlExtension.isNotEmpty && urlExtension.length <= 5) {
+    return urlExtension;
+  }
+
+  return mimeType.startsWith('video/') ? 'mp4' : 'jpg';
+}
+
 class _SourceOption extends StatelessWidget {
   final IconData icon;
   final String label;
@@ -391,28 +468,24 @@ class _SourceOption extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
-
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: BorderRadius.circular(16.r),
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 20),
+        padding: EdgeInsets.symmetric(vertical: 20.w),
         decoration: BoxDecoration(
-          color: scheme.surfaceContainerHighest,
-          borderRadius: BorderRadius.circular(16),
+          color: AppColors
+              .surfaceHigh, // Replaced standard surfaceContainerHighest
+          borderRadius: BorderRadius.circular(16.r),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 32, color: scheme.primary),
-            const SizedBox(height: 8),
+            Icon(icon, size: 32.w, color: AppColors.primary),
+            8.verticalSpace,
             Text(
               label,
-              style: textTheme.bodyMedium?.copyWith(
-                fontWeight: FontWeight.w500,
-              ),
+              style: AppFonts.medium14.copyWith(color: AppColors.onBackground),
             ),
           ],
         ),

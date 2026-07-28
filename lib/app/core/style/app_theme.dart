@@ -6,13 +6,41 @@ import 'app_dimension.dart';
 import 'app_fonts.dart';
 
 class AppTheme {
-  static ThemeData lightTheme = ThemeData(
-    brightness: Brightness.light,
+  static ThemeData darkTheme = ThemeData(
+    brightness: Brightness.dark,
+    colorScheme: const ColorScheme.dark(
+      primary: AppColors.primary,
+      secondary: AppColors.onSurface,
+      surface: AppColors.surface,
+      error: AppColors.error,
+      onPrimary: AppColors.background,
+      onSecondary: AppColors.background,
+      onSurface: AppColors.onBackground,
+      onError: Colors.white,
+    ),
     scaffoldBackgroundColor: AppColors.background,
+    canvasColor: AppColors.surface,
+    dialogBackgroundColor: AppColors.surface,
+    bottomSheetTheme: const BottomSheetThemeData(
+      backgroundColor: AppColors.surface,
+      modalBackgroundColor: AppColors.surface,
+      surfaceTintColor: Colors.transparent,
+    ),
+    inputDecorationTheme: InputDecorationTheme(
+      filled: true,
+      fillColor: AppColors.surfaceHigh,
+      hintStyle: AppFonts.regular14.copyWith(color: AppColors.onSurfaceMuted),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(8),
+        borderSide: BorderSide.none,
+      ),
+    ),
     cardTheme: _cardThemeData(),
     textSelectionTheme: _textSelectionThemeData(),
     appBarTheme: AppBarTheme(
-      backgroundColor: AppColors.primary,
+      backgroundColor: AppColors.appBarBackground,
+      foregroundColor: AppColors.appBarTitle,
+      surfaceTintColor: Colors.transparent,
       toolbarHeight: 55.w,
       elevation: 0,
       titleTextStyle: AppFonts.bold18.copyWith(color: AppColors.appBarTitle),
@@ -24,7 +52,7 @@ class AppTheme {
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
         backgroundColor: AppColors.primary,
-        foregroundColor: Colors.white,
+        foregroundColor: AppColors.background,
         disabledBackgroundColor: AppColors.textDisabled,
         disabledForegroundColor: Colors.white,
         textStyle: AppFonts.medium14,
@@ -65,7 +93,7 @@ TextSelectionThemeData _textSelectionThemeData() {
 
 CardTheme _cardThemeData() {
   return CardTheme(
-    color: AppColors.primary,
+    color: AppColors.surface,
     shape: RoundedRectangleBorder(
       borderRadius: BorderRadius.circular(10),
     ),

@@ -1,52 +1,20 @@
-// media_preview_container.dart
-//
-// Self-contained preview widget — handles picking and clearing internally.
-//
-// Empty  → tap → opens media source sheet → calls onChanged(result)
-// Filled → tap → opens action sheet (Change / Remove)
-//              → Change: opens source sheet → calls onChanged(result)
-//              → Remove: calls onChanged(null)
-//
-// Usage:
-//   MediaPreviewContainer(
-//     file: _file,
-//     mediaType: _type,
-//     pickType: MediaType.any,
-//     onChanged: (result) {
-//       setState(() {
-//         _file = result?.file;
-//         _type = result?.resolvedType;
-//       });
-//     },
-//   )
-
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:hidden_photo_vault/app/core/style/app_colors.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:path/path.dart' as p;
 
 import '../services/media_picker_service.dart';
+import '../style/app_colors.dart';
+import 'dark_video_player.dart';
 import 'media_picker_sheet.dart';
 
 class MediaPreviewContainer extends StatelessWidget {
-  /// Current file. Null = empty state.
   final XFile? file;
-
-  /// Resolved type of [file]. Used to render the correct preview.
   final MediaType? mediaType;
-
-  /// What media type to allow when picking. Defaults to [MediaType.any].
   final MediaType pickType;
-
-  /// Called whenever the media changes.
-  /// Receives [MediaPickResult] on pick, or null when user removes.
   final void Function(MediaPickResult? result) onChanged;
-
-  /// Side length of the square. Defaults to full available width.
   final double? size;
-
-  /// Corner radius. Defaults to 16.
   final double borderRadius;
 
   const MediaPreviewContainer({
@@ -59,213 +27,110 @@ class MediaPreviewContainer extends StatelessWidget {
     this.borderRadius = 16,
   });
 
-  // ── Tap handlers ────────────────────────────────────────────────────────────
-
-  Future<void> _onTap(BuildContext context) async {
-    if (file == null) {
-      await _openPicker(context);
-    } else {
-      await _openActionSheet(context);
-    }
-  }
-
   Future<void> _openPicker(BuildContext context) async {
     final result = await showMediaSourceSheet(context, type: pickType);
-    if (result != null && result.isSuccess) {
-      onChanged(result);
-    }
+    if (result != null && result.isSuccess) onChanged(result);
   }
-
-  Future<void> _openActionSheet(BuildContext context) async {
-    final action = await showModalBottomSheet<_MediaAction>(
-      context: context,
-      backgroundColor: AppColors.secondary,
-      builder: (_) => _MediaActionSheet(),
-    );
-
-    if (action == null) return;
-    if (!context.mounted) return;
-
-    switch (action) {
-      case _MediaAction.change:
-        await _openPicker(context);
-      case _MediaAction.remove:
-        onChanged(null);
-    }
-  }
-
-  // ── Build ────────────────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
     final effectiveSize = size ?? MediaQuery.of(context).size.width;
+    final currentFile = file;
 
-    return GestureDetector(
-      onTap: () => _onTap(context),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(borderRadius),
-        child: SizedBox(
-          width: effectiveSize,
-          height: effectiveSize,
-          child: file == null
-              ? _Placeholder(scheme: scheme, borderRadius: borderRadius)
-              : _Preview(
-                  file: file!,
-                  mediaType: mediaType ?? MediaType.image,
-                  scheme: scheme,
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(borderRadius),
+      child: SizedBox(
+        width: effectiveSize,
+        height: effectiveSize,
+        child: currentFile == null
+            ? InkWell(
+                onTap: () => _openPicker(context),
+                child: DashedBorderContainer(
+                  borderRadius: borderRadius,
+                  color: AppColors.primary,
+                  child: const _EmptyPreview(),
                 ),
-        ),
-      ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Action sheet (Change / Remove)
-// ─────────────────────────────────────────────────────────────────────────────
-
-enum _MediaAction { change, remove }
-
-class _MediaActionSheet extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
-
-    return Container(
-      decoration: BoxDecoration(
-        color: scheme.surface,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Drag handle
-          Container(
-            width: 40,
-            height: 4,
-            decoration: BoxDecoration(
-              color: scheme.onSurface.withOpacity(0.2),
-              borderRadius: BorderRadius.circular(2),
-            ),
-          ),
-          const SizedBox(height: 20),
-
-          // Options row — same style as media_source_sheet
-          Row(
-            children: [
-              Expanded(
-                child: _ActionOption(
-                  icon: Icons.swap_horiz_rounded,
-                  label: 'Change',
-                  onTap: () => Navigator.pop(context, _MediaAction.change),
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: _ActionOption(
-                  icon: Icons.delete_outline_rounded,
-                  label: 'Remove',
-                  color: scheme.error,
-                  onTap: () => Navigator.pop(context, _MediaAction.remove),
-                ),
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 16),
-
-          TextButton(
-            onPressed: () => Navigator.pop(context, null),
-            child: Text(
-              'Cancel',
-              style: textTheme.bodyMedium?.copyWith(
-                color: scheme.onSurface.withOpacity(0.5),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ActionOption extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final VoidCallback onTap;
-  final Color? color;
-
-  const _ActionOption({
-    required this.icon,
-    required this.label,
-    required this.onTap,
-    this.color,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final effectiveColor = color ?? scheme.primary;
-
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 20),
-        decoration: BoxDecoration(
-          color: AppColors.primary,
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 32, color: effectiveColor),
-            const SizedBox(height: 8),
-            Text(
-              label,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    fontWeight: FontWeight.w500,
-                    color: effectiveColor,
+              )
+            : Stack(
+                fit: StackFit.expand,
+                children: [
+                  if (mediaType == MediaType.video)
+                    DarkVideoPlayer(
+                      key: ValueKey(currentFile.path),
+                      sourcePath: currentFile.path,
+                      compact: true,
+                      fit: BoxFit.contain,
+                    )
+                  else
+                    ColoredBox(
+                      color: Colors.black,
+                      child: Image.file(
+                        File(currentFile.path),
+                        fit: BoxFit.contain,
+                        gaplessPlayback: true,
+                        errorBuilder: (_, __, ___) => const _PreviewError(),
+                      ),
+                    ),
+                  Positioned(
+                    top: 10,
+                    left: 10,
+                    child: _MediaBadge(
+                      label: mediaType == MediaType.video
+                          ? p
+                              .extension(currentFile.path)
+                              .replaceFirst('.', '')
+                              .toUpperCase()
+                          : p.extension(currentFile.path).toLowerCase() == '.gif'
+                              ? 'GIF'
+                              : 'IMAGE',
+                    ),
                   ),
-            ),
-          ],
-        ),
+                  Positioned(
+                    top: 8,
+                    right: 8,
+                    child: Row(
+                      children: [
+                        _RoundAction(
+                          tooltip: 'Change media',
+                          icon: Icons.swap_horiz_rounded,
+                          onTap: () => _openPicker(context),
+                        ),
+                        const SizedBox(width: 8),
+                        _RoundAction(
+                          tooltip: 'Remove media',
+                          icon: Icons.close_rounded,
+                          color: AppColors.error,
+                          onTap: () => onChanged(null),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
       ),
     );
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Empty placeholder
-// ─────────────────────────────────────────────────────────────────────────────
-
-class _Placeholder extends StatelessWidget {
-  final ColorScheme scheme;
-  final double borderRadius;
-  const _Placeholder({required this.scheme, required this.borderRadius});
+class _EmptyPreview extends StatelessWidget {
+  const _EmptyPreview();
 
   @override
   Widget build(BuildContext context) {
-    return DashedBorderContainer(
-      borderRadius: borderRadius,
-      color: AppColors.primary,
+    return const ColoredBox(
+      color: AppColors.surface,
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(
-            Icons.add_photo_alternate_outlined,
+            Icons.add_to_photos_outlined,
             size: 48,
-            color: AppColors.primary.withOpacity(0.3),
+            color: AppColors.onSurfaceMuted,
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
           Text(
-            'Tap to add media',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: AppColors.textPrimary,
-                ),
+            'Tap to add photo, GIF, or video',
+            style: TextStyle(color: AppColors.onSurface),
           ),
         ],
       ),
@@ -273,80 +138,79 @@ class _Placeholder extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Filled preview
-// ─────────────────────────────────────────────────────────────────────────────
-
-class _Preview extends StatelessWidget {
-  final XFile file;
-  final MediaType mediaType;
-  final ColorScheme scheme;
-
-  const _Preview({
-    required this.file,
-    required this.mediaType,
-    required this.scheme,
-  });
+class _PreviewError extends StatelessWidget {
+  const _PreviewError();
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      fit: StackFit.expand,
-      children: [
-        if (mediaType == MediaType.image)
-          Image.file(File(file.path), fit: BoxFit.cover)
-        else
-          Container(
-            color: AppColors.primary,
-            child: Center(
-              child: Icon(
-                Icons.play_circle_outline_rounded,
-                size: 64,
-                color: AppColors.primary.withOpacity(0.4),
-              ),
-            ),
-          ),
-
-        // Bottom hint overlay
-        Positioned(
-          bottom: 0,
-          left: 0,
-          right: 0,
-          child: Container(
-            padding: const EdgeInsets.symmetric(vertical: 10),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.bottomCenter,
-                end: Alignment.topCenter,
-                colors: [
-                  Colors.black.withOpacity(0.55),
-                  Colors.transparent,
-                ],
-              ),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.touch_app_outlined, size: 14, color: Colors.white.withOpacity(0.8)),
-                const SizedBox(width: 4),
-                Text(
-                  'Tap to change or remove',
-                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                        color: Colors.white.withOpacity(0.8),
-                      ),
-                ),
-              ],
-            ),
-          ),
+    return const ColoredBox(
+      color: AppColors.surface,
+      child: Center(
+        child: Icon(
+          Icons.broken_image_outlined,
+          color: AppColors.error,
+          size: 40,
         ),
-      ],
+      ),
     );
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Dashed border painter
-// ─────────────────────────────────────────────────────────────────────────────
+class _RoundAction extends StatelessWidget {
+  final String tooltip;
+  final IconData icon;
+  final VoidCallback onTap;
+  final Color color;
+
+  const _RoundAction({
+    required this.tooltip,
+    required this.icon,
+    required this.onTap,
+    this.color = Colors.white,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.black.withOpacity(0.72),
+      shape: const CircleBorder(),
+      child: IconButton(
+        tooltip: tooltip,
+        onPressed: onTap,
+        visualDensity: VisualDensity.compact,
+        icon: Icon(icon, color: color, size: 20),
+      ),
+    );
+  }
+}
+
+class _MediaBadge extends StatelessWidget {
+  final String label;
+
+  const _MediaBadge({required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: Colors.black.withOpacity(0.72),
+        borderRadius: BorderRadius.circular(4),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
+        child: Text(
+          label,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 10,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 0.5,
+          ),
+        ),
+      ),
+    );
+  }
+}
 
 class DashedBorderContainer extends StatelessWidget {
   final Widget child;
@@ -369,7 +233,7 @@ class DashedBorderContainer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return CustomPaint(
-      painter: _DashedBorderPainter(
+      foregroundPainter: _DashedBorderPainter(
         color: color,
         borderRadius: borderRadius,
         dashWidth: dashWidth,
@@ -402,12 +266,13 @@ class _DashedBorderPainter extends CustomPainter {
       ..color = color
       ..strokeWidth = strokeWidth
       ..style = PaintingStyle.stroke;
-
     final path = Path()
-      ..addRRect(RRect.fromRectAndRadius(
-        Rect.fromLTWH(0, 0, size.width, size.height),
-        Radius.circular(borderRadius),
-      ));
+      ..addRRect(
+        RRect.fromRectAndRadius(
+          Rect.fromLTWH(0, 0, size.width, size.height),
+          Radius.circular(borderRadius),
+        ),
+      );
 
     for (final metric in path.computeMetrics()) {
       double distance = 0;
@@ -420,6 +285,10 @@ class _DashedBorderPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(_DashedBorderPainter old) =>
-      old.color != color || old.borderRadius != borderRadius || old.strokeWidth != strokeWidth;
+  bool shouldRepaint(_DashedBorderPainter oldDelegate) =>
+      oldDelegate.color != color ||
+      oldDelegate.borderRadius != borderRadius ||
+      oldDelegate.dashWidth != dashWidth ||
+      oldDelegate.dashGap != dashGap ||
+      oldDelegate.strokeWidth != strokeWidth;
 }

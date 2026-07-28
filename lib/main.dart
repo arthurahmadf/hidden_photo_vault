@@ -4,6 +4,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:media_kit/media_kit.dart';
 
 import 'app/core/services/data_service.dart';
 import 'app/core/services/flavor/flavor_banner.dart';
@@ -13,6 +14,7 @@ import 'app/routes/app_pages.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  MediaKit.ensureInitialized();
   await DataService.init();
   await initializeDateFormatting('id_ID', null);
   await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp, DeviceOrientation.portraitDown]);
@@ -37,8 +39,9 @@ void main() async {
             locale: const Locale('id', 'ID'),
             fallbackLocale: const Locale('id', 'ID'),
             getPages: AppPages.routes,
-            theme: AppTheme.lightTheme,
-            darkTheme: AppTheme.lightTheme,
+            theme: AppTheme.darkTheme,
+            darkTheme: AppTheme.darkTheme,
+            themeMode: ThemeMode.dark,
             defaultTransition: Transition.rightToLeft,
             localizationsDelegates: const [
               GlobalMaterialLocalizations.delegate,

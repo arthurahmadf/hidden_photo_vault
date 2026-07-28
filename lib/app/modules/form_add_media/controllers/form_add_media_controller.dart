@@ -19,15 +19,16 @@ class FormAddMediaController extends GetxController {
     if (file == null) return;
     DialogService.showLoading(dismissible: false);
     LoggerHelper.info("vaultId: ${homeController.selectedVault.value.id}");
-    LoggerHelper.info("vaultPin: ${homeController.selectedVaultPin}");
     try {
       var key = homeController.selectedVaultPin ?? "public";
       var isSuccess = await gs.insertMedia(
         file!,
-        mediaType!,
+        mediaType ?? MediaType.image,
         homeController.selectedVault.value.id ?? "public",
         encryptionKey: key,
-        tag: tagTextController.text.trim().isNotEmpty ? tagTextController.text.trim() : "default",
+        tag: tagTextController.text.trim().isNotEmpty
+            ? tagTextController.text.trim()
+            : "default",
       );
       if (isSuccess) {
         closeDialog();
@@ -36,9 +37,19 @@ class FormAddMediaController extends GetxController {
       }
       LoggerHelper.info("Something went wrong pas saving gallery $isSuccess");
       closeDialog();
+      Get.snackbar(
+          'Could not save media', 'The selected format could not be imported.');
     } catch (e) {
-      LoggerHelper.info("Something went wrong pas saving gallery catched error ${e.toString()}");
+      LoggerHelper.info(
+          "Something went wrong pas saving gallery catched error ${e.toString()}");
       closeDialog();
+      Get.snackbar('Could not save media', 'Please try another file.');
     }
+  }
+
+  @override
+  void onClose() {
+    tagTextController.dispose();
+    super.onClose();
   }
 }

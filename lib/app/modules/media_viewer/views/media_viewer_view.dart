@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:hidden_photo_vault/app/core/widgets/dark_video_player.dart';
 import 'package:hidden_photo_vault/app/data/models/gallery_media_model.dart';
 import 'package:hidden_photo_vault/app/modules/media_viewer/controllers/media_viewer_controller.dart';
 
@@ -22,7 +23,8 @@ class MediaViewerView extends GetView<MediaViewerController> {
             Obx(() => PageView.builder(
                   controller: controller.pageController,
                   // freeze PageView when zoomed in so pan doesn't fight swipe
-                  physics: (controller.isZoomed.value || !controller.overlayVisible.value)
+                  physics: (controller.isZoomed.value ||
+                          !controller.overlayVisible.value)
                       ? const NeverScrollableScrollPhysics()
                       : const PageScrollPhysics(),
                   itemCount: controller.mediaList.length,
@@ -32,6 +34,7 @@ class MediaViewerView extends GetView<MediaViewerController> {
                     return _MediaPage(
                       key: ValueKey(media.id),
                       media: media,
+                      index: index,
                       controller: controller,
                     );
                   },
@@ -41,7 +44,9 @@ class MediaViewerView extends GetView<MediaViewerController> {
             Obx(() => AnimatedSlide(
                   duration: const Duration(milliseconds: 220),
                   curve: Curves.easeInOut,
-                  offset: controller.overlayVisible.value ? Offset.zero : const Offset(0, -1),
+                  offset: controller.overlayVisible.value
+                      ? Offset.zero
+                      : const Offset(0, -1),
                   child: _TopBar(controller: controller),
                 )),
 
@@ -49,7 +54,9 @@ class MediaViewerView extends GetView<MediaViewerController> {
             Obx(() => AnimatedSlide(
                   duration: const Duration(milliseconds: 220),
                   curve: Curves.easeInOut,
-                  offset: controller.overlayVisible.value ? Offset.zero : const Offset(0, 1),
+                  offset: controller.overlayVisible.value
+                      ? Offset.zero
+                      : const Offset(0, 1),
                   child: Align(
                     alignment: Alignment.bottomCenter,
                     child: _BottomBar(controller: controller),
@@ -68,11 +75,13 @@ class MediaViewerView extends GetView<MediaViewerController> {
 
 class _MediaPage extends StatefulWidget {
   final GalleryMedia media;
+  final int index;
   final MediaViewerController controller;
 
   const _MediaPage({
     super.key,
     required this.media,
+    required this.index,
     required this.controller,
   });
 
@@ -80,8 +89,15 @@ class _MediaPage extends StatefulWidget {
   State<_MediaPage> createState() => _MediaPageState();
 }
 
-class _MediaPageState extends State<_MediaPage> {
+class _MediaPageState extends State<_MediaPage>
+    with SingleTickerProviderStateMixin {
+  static const double _doubleTapScale = 2.5;
+  static const Duration _doubleTapZoomDuration = Duration(milliseconds: 220);
+
   late final TransformationController _transformController;
+  late final AnimationController _zoomAnimationController;
+  Animation<Matrix4>? _zoomAnimation;
+  Offset _doubleTapPosition = Offset.zero;
 
   @override
   void initState() {
@@ -91,18 +107,96 @@ class _MediaPageState extends State<_MediaPage> {
       final scale = _transformController.value.getMaxScaleOnAxis();
       widget.controller.isZoomed.value = scale > 1.05;
     });
+    _zoomAnimationController = AnimationController(
+      vsync: this,
+      duration: _doubleTapZoomDuration,
+    )..addListener(() {
+        final animation = _zoomAnimation;
+        if (animation != null) {
+          _transformController.value = animation.value;
+        }
+      });
   }
 
   @override
   void dispose() {
     // Reset zoom state when this page is disposed (swiped away)
     widget.controller.isZoomed.value = false;
+    _zoomAnimationController.dispose();
     _transformController.dispose();
     super.dispose();
   }
 
+  void _handleDoubleTapDown(TapDownDetails details) {
+    _doubleTapPosition = details.localPosition;
+  }
+
+  void _handleDoubleTap() {
+    final currentScale = _transformController.value.getMaxScaleOnAxis();
+    final target = currentScale > 1.05
+        ? Matrix4.identity()
+        : (Matrix4.identity()
+          ..setEntry(0, 0, _doubleTapScale)
+          ..setEntry(1, 1, _doubleTapScale)
+          ..setEntry(2, 2, _doubleTapScale)
+          ..setEntry(
+            0,
+            3,
+            -_doubleTapPosition.dx * (_doubleTapScale - 1),
+          )
+          ..setEntry(
+            1,
+            3,
+            -_doubleTapPosition.dy * (_doubleTapScale - 1),
+          ));
+
+    _zoomAnimationController.stop();
+    _zoomAnimation = Matrix4Tween(
+      begin: Matrix4.copy(_transformController.value),
+      end: target,
+    ).animate(
+      CurvedAnimation(
+        parent: _zoomAnimationController,
+        curve: Curves.easeOutCubic,
+      ),
+    );
+    _zoomAnimationController.forward(from: 0);
+  }
+
   @override
   Widget build(BuildContext context) {
+    if (widget.media.isVideo) {
+      return FutureBuilder<String>(
+        future: widget.controller.prepareVideo(widget.media),
+        builder: (context, snapshot) {
+          if (snapshot.hasError) {
+            return const Center(
+              child: Text(
+                'This video could not be opened.',
+                style: TextStyle(color: Colors.white70),
+              ),
+            );
+          }
+          if (!snapshot.hasData) {
+            return const Center(
+              child: CircularProgressIndicator(color: Colors.white54),
+            );
+          }
+          return Obx(
+            () => DarkVideoPlayer(
+              sourcePath: snapshot.data!,
+              active: widget.controller.currentIndex.value == widget.index,
+              autoplay: widget.controller.currentIndex.value == widget.index,
+              fit: BoxFit.contain,
+              controlsBottomInset: widget.controller.overlayVisible.value
+                  ? MediaQuery.of(context).padding.bottom + 112.w
+                  : MediaQuery.of(context).padding.bottom + 8.w,
+            ),
+          );
+        },
+      );
+    }
+
     return FutureBuilder<Uint8List>(
       future: widget.controller.loadMedia(widget.media),
       builder: (context, snapshot) {
@@ -113,16 +207,22 @@ class _MediaPageState extends State<_MediaPage> {
         }
         return Hero(
           tag: 'media_${widget.media.id}',
-          child: InteractiveViewer(
-            transformationController: _transformController,
-            minScale: 0.8,
-            maxScale: 5.0,
-            panEnabled: true,
-            child: Center(
-              child: Image.memory(
-                snapshot.data!,
-                fit: BoxFit.contain,
-                gaplessPlayback: true,
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onDoubleTapDown: _handleDoubleTapDown,
+            onDoubleTap: _handleDoubleTap,
+            child: InteractiveViewer(
+              transformationController: _transformController,
+              minScale: 0.8,
+              maxScale: 5.0,
+              panEnabled: true,
+              onInteractionStart: (_) => _zoomAnimationController.stop(),
+              child: Center(
+                child: Image.memory(
+                  snapshot.data!,
+                  fit: BoxFit.contain,
+                  gaplessPlayback: true,
+                ),
               ),
             ),
           ),
@@ -159,7 +259,8 @@ class _TopBar extends StatelessWidget {
       child: Obx(() => Row(
             children: [
               IconButton(
-                icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
+                icon: const Icon(Icons.arrow_back_ios_new_rounded,
+                    color: Colors.white),
                 onPressed: Get.back,
               ),
               const Spacer(),
@@ -232,10 +333,12 @@ class _BottomBar extends StatelessWidget {
                             autofocus: true,
                             onSubmitted: (_) => controller.saveTag(),
                             onTapOutside: (_) => controller.saveTag(),
-                            style: const TextStyle(color: Colors.white, fontSize: 12),
+                            style: const TextStyle(
+                                color: Colors.white, fontSize: 12),
                             decoration: InputDecoration(
                               isDense: true,
-                              contentPadding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.w),
+                              contentPadding: EdgeInsets.symmetric(
+                                  horizontal: 8.w, vertical: 4.w),
                               filled: true,
                               fillColor: Colors.white12,
                               border: OutlineInputBorder(
@@ -244,7 +347,8 @@ class _BottomBar extends StatelessWidget {
                               ),
                               suffixIcon: GestureDetector(
                                 onTap: controller.saveTag,
-                                child: Icon(Icons.check_rounded, color: Colors.white70, size: 16.w),
+                                child: Icon(Icons.check_rounded,
+                                    color: Colors.white70, size: 16.w),
                               ),
                             ),
                           ),
@@ -254,14 +358,17 @@ class _BottomBar extends StatelessWidget {
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(Icons.label_outline_rounded, color: Colors.white54, size: 12.w),
+                              Icon(Icons.label_outline_rounded,
+                                  color: Colors.white54, size: 12.w),
                               4.horizontalSpace,
                               Text(
                                 media.tag ?? 'default',
-                                style: const TextStyle(color: Colors.white54, fontSize: 12),
+                                style: const TextStyle(
+                                    color: Colors.white54, fontSize: 12),
                               ),
                               4.horizontalSpace,
-                              Icon(Icons.edit_outlined, color: Colors.white38, size: 11.w),
+                              Icon(Icons.edit_outlined,
+                                  color: Colors.white38, size: 11.w),
                             ],
                           ),
                         )),
@@ -295,12 +402,14 @@ class _BottomBar extends StatelessWidget {
                     width: 44.w,
                     height: 44.w,
                     child: const Center(
-                      child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                      child: CircularProgressIndicator(
+                          color: Colors.white, strokeWidth: 2),
                     ),
                   )
                 : IconButton(
                     onPressed: () => _confirmDelete(context),
-                    icon: Icon(Icons.delete_outline_rounded, color: Colors.white, size: 26.w),
+                    icon: Icon(Icons.delete_outline_rounded,
+                        color: Colors.white, size: 26.w),
                   )),
           ],
         );
@@ -313,7 +422,8 @@ class _BottomBar extends StatelessWidget {
       context: context,
       builder: (_) => AlertDialog(
         title: const Text('Delete media'),
-        content: const Text('This will permanently delete this file. Are you sure?'),
+        content:
+            const Text('This will permanently delete this file. Are you sure?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
@@ -324,7 +434,8 @@ class _BottomBar extends StatelessWidget {
               Navigator.pop(context);
               controller.deleteCurrentMedia();
             },
-            child: Text('Delete', style: TextStyle(color: Theme.of(context).colorScheme.error)),
+            child: Text('Delete',
+                style: TextStyle(color: Theme.of(context).colorScheme.error)),
           ),
         ],
       ),

@@ -14,6 +14,7 @@ import 'package:encrypt/encrypt.dart' as aes;
 import 'package:flutter/foundation.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:hidden_photo_vault/app/data/models/gallery_media_model.dart';
+import 'package:media_kit/media_kit.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:uuid/uuid.dart';
@@ -65,10 +66,30 @@ class GalleryService {
       final id = _uuid.v4();
       final dir = await _vaultDirectory();
       final sourceBytes = await file.readAsBytes();
+      final resolvedType = resolveMediaType(
+        file.path,
+        mimeType: file.mimeType,
+        headerBytes: sourceBytes.take(64).toList(),
+      );
+      final effectiveType =
+          mediaType == MediaType.any ? resolvedType : mediaType;
+      final mimeType = resolveMediaMimeType(
+        file.path,
+        mediaType: effectiveType,
+        suppliedMimeType: file.mimeType,
+        headerBytes: sourceBytes.take(64).toList(),
+      );
 
-      // Generate thumbnail (images only)
-      final thumbBytes =
-          mediaType == MediaType.image ? await _generateThumb(sourceBytes) : _videoThumbPlaceholder();
+      _VideoInfo? videoInfo;
+      Uint8List thumbBytes;
+      if (effectiveType == MediaType.video) {
+        videoInfo = await _inspectVideo(file.path);
+        thumbBytes = videoInfo?.thumbnail == null
+            ? _videoThumbPlaceholder()
+            : await _generateThumb(videoInfo!.thumbnail!);
+      } else {
+        thumbBytes = await _generateThumb(sourceBytes);
+      }
 
       // Encrypt both
       final encFull = _encrypt(sourceBytes, encryptionKey);
@@ -87,11 +108,14 @@ class GalleryService {
         filePath: fullPath,
         thumbPath: thumbPath,
         originalName: p.basename(file.path),
-        mimeType: _resolveMime(mediaType, file.path),
+        mimeType: mimeType,
         fileSize: sourceBytes.length,
         importedAt: DateTime.now(),
         vaultId: vaultId,
         tag: tag,
+        durationMs: videoInfo?.duration.inMilliseconds,
+        width: videoInfo?.width,
+        height: videoInfo?.height,
       );
 
       await DataService.gallery.put(id, image);
@@ -125,7 +149,8 @@ class GalleryService {
   }
 
   Future<bool> updateTag(GalleryMedia media, String tag) async {
-    final updated = media.copyWith(tag: tag.trim().isEmpty ? 'default' : tag.trim());
+    final updated =
+        media.copyWith(tag: tag.trim().isEmpty ? 'default' : tag.trim());
     await DataService.gallery.update(media.id!, updated);
     return true;
   }
@@ -134,24 +159,29 @@ class GalleryService {
   Future<List<GalleryMedia>> getImages(String vaultId) async {
     final list = DataService.gallery.where((img) => img.vaultId == vaultId);
 
-    list.sort((a, b) => (b.importedAt ?? DateTime(0)).compareTo(a.importedAt ?? DateTime(0)));
+    list.sort((a, b) =>
+        (b.importedAt ?? DateTime(0)).compareTo(a.importedAt ?? DateTime(0)));
 
     return list;
   }
 
   /// Decrypt and return thumbnail bytes for grid display.
   /// Pass [encryptionKey] matching the one used at insert time.
-  Future<Uint8List> loadThumb(GalleryMedia media, {String encryptionKey = publicKey}) async {
+  Future<Uint8List> loadThumb(GalleryMedia media,
+      {String encryptionKey = publicKey}) async {
     final encBytes = await File(media.thumbPath!).readAsBytes();
-    return await compute(_decryptIsolate, _DecryptParams(encBytes, encryptionKey));
+    return await compute(
+        _decryptIsolate, _DecryptParams(encBytes, encryptionKey));
   }
 
   /// Decrypt and return full image bytes for the viewer.
   /// Pass [encryptionKey] matching the one used at insert time.
-  Future<Uint8List> loadFull(GalleryMedia media, {String encryptionKey = publicKey}) async {
+  Future<Uint8List> loadFull(GalleryMedia media,
+      {String encryptionKey = publicKey}) async {
     final encBytes = await File(media.filePath!).readAsBytes();
     // run decrypt off main thread
-    return await compute(_decryptIsolate, _DecryptParams(encBytes, encryptionKey));
+    return await compute(
+        _decryptIsolate, _DecryptParams(encBytes, encryptionKey));
   }
 
   // ── Private ─────────────────────────────────────────────────────────────────
@@ -276,17 +306,50 @@ class GalleryService {
     return dir;
   }
 
-  String _resolveMime(MediaType type, String path) {
-    if (type == MediaType.video) return 'video/mp4';
-    const map = {
-      'jpg': 'image/jpeg',
-      'jpeg': 'image/jpeg',
-      'png': 'image/png',
-      'gif': 'image/gif',
-      'webp': 'image/webp',
-      'heic': 'image/heic',
-    };
-    return map[p.extension(path).toLowerCase().replaceAll('.', '')] ?? 'image/jpeg';
+  Future<_VideoInfo?> _inspectVideo(String path) async {
+    final player = Player();
+    try {
+      await player.open(Media(path), play: false);
+
+      var duration = player.state.duration;
+      if (duration == Duration.zero) {
+        try {
+          duration = await player.stream.duration
+              .firstWhere((value) => value > Duration.zero)
+              .timeout(const Duration(seconds: 8));
+        } catch (_) {
+          duration = player.state.duration;
+        }
+      }
+
+      if (duration > Duration.zero) {
+        final previewAt = Duration(
+          milliseconds: duration.inMilliseconds.clamp(250, 1000).toInt(),
+        );
+        await player.seek(previewAt);
+      }
+
+      Uint8List? thumbnail;
+      try {
+        thumbnail = await player.screenshot(format: 'image/jpeg');
+      } catch (_) {
+        // Some valid codecs do not expose a video frame during import. Playback
+        // remains available and the grid will use its video placeholder.
+      }
+
+      final width = player.state.width;
+      final height = player.state.height;
+      return _VideoInfo(
+        duration: duration,
+        width: width == 0 ? null : width,
+        height: height == 0 ? null : height,
+        thumbnail: thumbnail,
+      );
+    } catch (_) {
+      return null;
+    } finally {
+      await player.dispose();
+    }
   }
   // ── Exposed for VaultService (changePin, export, import) ───────────────────
 
@@ -295,4 +358,18 @@ class GalleryService {
 
   /// Public wrapper around [_decrypt] — used by VaultService for re-encryption.
   Uint8List decryptBytes(Uint8List bytes, String key) => _decrypt(bytes, key);
+}
+
+class _VideoInfo {
+  const _VideoInfo({
+    required this.duration,
+    required this.width,
+    required this.height,
+    required this.thumbnail,
+  });
+
+  final Duration duration;
+  final int? width;
+  final int? height;
+  final Uint8List? thumbnail;
 }

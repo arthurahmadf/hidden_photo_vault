@@ -17,8 +17,9 @@ import 'package:hidden_photo_vault/app/routes/app_pages.dart';
 
 class HomeController extends GetxController with WidgetsBindingObserver {
   final GalleryService gs = GalleryService();
-  String get activeEncKey =>
-      selectedVault.value.id == 'public' ? GalleryService.publicKey : selectedVaultPin ?? GalleryService.publicKey;
+  String get activeEncKey => selectedVault.value.id == 'public'
+      ? GalleryService.publicKey
+      : selectedVaultPin ?? GalleryService.publicKey;
   final galleryLoadState = LoadState.LOADING.obs;
   final images = <GalleryMedia>[].obs;
   final thumbCache = <String, Uint8List>{}.obs;
@@ -71,16 +72,19 @@ class HomeController extends GetxController with WidgetsBindingObserver {
     }
     return Map.fromEntries([
       if (map.containsKey('default')) MapEntry('default', map['default']!),
-      ...map.entries.where((e) => e.key != 'default').toList()..sort((a, b) => a.key.compareTo(b.key)),
+      ...map.entries.where((e) => e.key != 'default').toList()
+        ..sort((a, b) => a.key.compareTo(b.key)),
     ]);
   }
 
   Future<void> buildThumbnailCache() async {
-    LoggerHelper.info("building cache | vaultId: ${selectedVault.value.id} | encKey: $activeEncKey");
+    LoggerHelper.info(
+        "building cache | vaultId: ${selectedVault.value.id} | encKey: $activeEncKey");
     for (final img in images) {
       if (thumbCache.containsKey(img.id)) continue;
 
-      final bytes = await gs.loadThumb(img, encryptionKey: selectedVaultPin ?? "public");
+      final bytes =
+          await gs.loadThumb(img, encryptionKey: selectedVaultPin ?? "public");
       thumbCache[img.id!] = bytes;
     }
     update();
@@ -109,6 +113,7 @@ class HomeController extends GetxController with WidgetsBindingObserver {
 
   Future<void> refreshImages() async {
     images.value = await gs.getImages(selectedVault.value.id ?? 'public');
+    await buildThumbnailCache();
   }
 
   void onCloseVaultTapped() {
@@ -135,15 +140,19 @@ class HomeController extends GetxController with WidgetsBindingObserver {
   }
 
   void onMediaTapped(GalleryMedia mediaMeta, int index) async {
-    unawaited(gs.loadFull(mediaMeta, encryptionKey: activeEncKey));
-    Get.toNamed(Routes.MEDIA_VIEWER, arguments: ViewMediaArgument(initialIndex: index));
+    if (!mediaMeta.isVideo) {
+      unawaited(gs.loadFull(mediaMeta, encryptionKey: activeEncKey));
+    }
+    Get.toNamed(Routes.MEDIA_VIEWER,
+        arguments: ViewMediaArgument(initialIndex: index));
   }
 
   Future<void> onBackPressed(bool didPop, BuildContext context) async {
     if (didPop) return;
 
-    final isVaultOpen =
-        selectedVault.value.id != "public" && selectedVaultPin != null && selectedVaultPin != "public";
+    final isVaultOpen = selectedVault.value.id != "public" &&
+        selectedVaultPin != null &&
+        selectedVaultPin != "public";
 
     final result = await DialogService.showDoubleButtonDialog(
       title: isVaultOpen ? "Close Vault?" : "Exit App?",

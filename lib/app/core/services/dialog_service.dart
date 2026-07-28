@@ -321,104 +321,109 @@ abstract class DialogService {
   /// - [onPositive]: Function executed when the confirmation button is pressed.
   /// - [negativeText]: The text for the cancel button.
   /// - [onNegative]: Function executed when the cancel button is pressed.
-  static Future<bool?> showDoubleButtonDialog({
+  static Future<dynamic> showDoubleButtonDialog({
     required String title,
     required String message,
     required String positiveText,
-    required VoidCallback onPositive,
     required String negativeText,
+    required VoidCallback onPositive,
     required VoidCallback onNegative,
-    Widget? titleIcon,
-    IconData? titleIconPath,
+    bool isDestructive = true, // Defaults to true for actions like 'Close Vault'
   }) {
-    final BuildContext? context = Get.context;
-    if (context == null) return Future.value(null);
-    return Get.dialog<bool>(
+    return Get.dialog(
       Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.r)),
-        backgroundColor: Colors.white,
-        child: Container(
-          padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 20.w),
+        backgroundColor: AppColors.surface,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12.r),
+          side: const BorderSide(color: AppColors.border, width: 1),
+        ),
+        child: Padding(
+          padding: EdgeInsets.all(20.w),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // ── Title & Icon ─────────────────────────────────────────────
               Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Expanded(
                     child: Text(
                       title,
-                      style: AppFonts.medium18,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+                      style: AppFonts.bold18.copyWith(
+                        color: AppColors.onBackground,
+                      ),
                     ),
                   ),
-                  titleIcon ??
-                      Icon(
-                        titleIconPath ?? Icons.warning,
-                        color: Colors.red,
-                        size: AppFonts.bold18.fontSize!.w,
-                      ),
+                  if (isDestructive)
+                    Icon(
+                      Icons.warning_amber_rounded,
+                      color: AppColors.error,
+                      size: 24.w,
+                    ),
                 ],
               ),
-              6.verticalSpace,
-              Divider(
-                color: Colors.black12,
-                thickness: 2.w,
-              ),
-              6.verticalSpace,
+
+              12.verticalSpace,
+              // ── Divider (Matches your reference image) ───────────────────
+              const Divider(color: AppColors.border, thickness: 1),
+              12.verticalSpace,
+
+              // ── Message ──────────────────────────────────────────────────
               Text(
                 message,
-                style: AppFonts.regular14,
-                maxLines: 4,
-                overflow: TextOverflow.ellipsis,
-                textAlign: TextAlign.start,
-              ).paddingZero,
-              30.verticalSpace,
+                style: AppFonts.medium14.copyWith(
+                  color: AppColors.onSurface,
+                ),
+              ),
+
+              24.verticalSpace,
+              // ── Action Buttons (50/50 split) ─────────────────────────────
               Row(
-                mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  SizedBox(
-                    width: .25.sw,
+                  // Negative Button ("Stay")
+                  Expanded(
                     child: ElevatedButton(
-                      style: ButtonStyle(
-                        visualDensity: VisualDensity.compact,
-                        backgroundColor: const WidgetStatePropertyAll(AppColors.background),
-                        padding: WidgetStatePropertyAll(
-                          EdgeInsets.symmetric(horizontal: 4.w, vertical: 4.w),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.surfaceHigh, // Dark grey background
+                        foregroundColor: AppColors.onBackground, // White text
+                        elevation: 0,
+                        padding: EdgeInsets.symmetric(vertical: 12.w),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8.r),
                         ),
                       ),
                       onPressed: onNegative,
-                      child: Text(
-                        negativeText,
-                        style: AppFonts.semibold14.copyWith(color: Colors.black),
-                      ),
+                      child: Text(negativeText),
                     ),
                   ),
-                  6.horizontalSpace,
-                  SizedBox(
-                    width: .25.sw,
+
+                  12.horizontalSpace,
+
+                  // Positive Button ("Close Vault")
+                  Expanded(
                     child: ElevatedButton(
-                      style: ButtonStyle(
-                        visualDensity: VisualDensity.compact,
-                        backgroundColor: const WidgetStatePropertyAll(AppColors.error),
-                        padding: WidgetStatePropertyAll(
-                          EdgeInsets.symmetric(horizontal: 4.w, vertical: 4.w),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: isDestructive ? AppColors.error : AppColors.primary,
+                        foregroundColor: isDestructive ? Colors.white : AppColors.background,
+                        elevation: 0,
+                        padding: EdgeInsets.symmetric(vertical: 12.w),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8.r),
                         ),
                       ),
                       onPressed: onPositive,
-                      child: Text(
-                        positiveText,
-                        style: AppFonts.semibold14.copyWith(color: Colors.white),
-                      ),
+                      child: Text(positiveText),
                     ),
                   ),
                 ],
-              )
+              ),
             ],
           ),
         ),
       ),
+      // Deep dark overlay behind the dialog to focus attention
+      barrierColor: Colors.black.withOpacity(0.8),
     );
   }
 

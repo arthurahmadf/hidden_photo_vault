@@ -32,6 +32,12 @@ class GalleryMedia {
   String? vaultId;
   @HiveField(8)
   String? tag;
+  @HiveField(9)
+  int? durationMs;
+  @HiveField(10)
+  int? width;
+  @HiveField(11)
+  int? height;
 
   GalleryMedia({
     this.id,
@@ -43,7 +49,14 @@ class GalleryMedia {
     this.importedAt,
     this.vaultId,
     this.tag,
+    this.durationMs,
+    this.width,
+    this.height,
   });
+
+  bool get isVideo => mimeType?.toLowerCase().startsWith('video/') ?? false;
+
+  bool get isGif => mimeType?.toLowerCase() == 'image/gif';
 
   GalleryMedia copyWith({
     String? id,
@@ -55,6 +68,9 @@ class GalleryMedia {
     DateTime? importedAt,
     String? vaultId,
     String? tag,
+    int? durationMs,
+    int? width,
+    int? height,
   }) =>
       GalleryMedia(
         id: id ?? this.id,
@@ -66,6 +82,9 @@ class GalleryMedia {
         importedAt: importedAt ?? this.importedAt,
         vaultId: vaultId ?? this.vaultId,
         tag: tag ?? this.tag,
+        durationMs: durationMs ?? this.durationMs,
+        width: width ?? this.width,
+        height: height ?? this.height,
       );
 
   factory GalleryMedia.fromJson(Map<String, dynamic> json) => GalleryMedia(
@@ -78,6 +97,9 @@ class GalleryMedia {
         importedAt: json["importedAt"] == null ? null : DateTime.parse(json["importedAt"]),
         vaultId: json["vaultId"],
         tag: json["tag"],
+        durationMs: json["durationMs"],
+        width: json["width"],
+        height: json["height"],
       );
 
   Map<String, dynamic> toJson() => {
@@ -90,5 +112,8 @@ class GalleryMedia {
         "importedAt": importedAt?.toIso8601String(),
         "vaultId": vaultId,
         "tag": tag,
+        "durationMs": durationMs,
+        "width": width,
+        "height": height,
       };
 }
