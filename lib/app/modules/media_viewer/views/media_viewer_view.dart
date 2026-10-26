@@ -12,6 +12,7 @@ class MediaViewerView extends GetView<MediaViewerController> {
 
   @override
   Widget build(BuildContext context) {
+    controller.warmInitial(context);
     return Scaffold(
       backgroundColor: Colors.black,
       body: GestureDetector(
@@ -20,17 +21,22 @@ class MediaViewerView extends GetView<MediaViewerController> {
         child: Stack(
           children: [
             // ── Media PageView ──────────────────────────────────────────────
-            Obx(() => PageView.builder(
+            Obx(() {
+              final immersionMode = !controller.overlayVisible.value;
+              final items = controller.mediaList;
+              return IgnorePointer(
+                ignoring: immersionMode,
+                child: PageView.builder(
                   controller: controller.pageController,
-                  // freeze PageView when zoomed in so pan doesn't fight swipe
-                  physics: (controller.isZoomed.value ||
-                          !controller.overlayVisible.value)
+                  // Freeze the PageView when zoomed or in immersion mode.
+                  physics: (controller.isZoomed.value || immersionMode)
                       ? const NeverScrollableScrollPhysics()
                       : const PageScrollPhysics(),
-                  itemCount: controller.mediaList.length,
-                  onPageChanged: controller.onPageChanged,
+                  itemCount: items.length,
+                  onPageChanged: (index) =>
+                      controller.onPageChanged(index, context),
                   itemBuilder: (context, index) {
-                    final media = controller.mediaList[index];
+                    final media = items[index];
                     return _MediaPage(
                       key: ValueKey(media.id),
                       media: media,
@@ -38,7 +44,9 @@ class MediaViewerView extends GetView<MediaViewerController> {
                       controller: controller,
                     );
                   },
-                )),
+                ),
+              );
+            }),
 
             // ── Top overlay ─────────────────────────────────────────────────
             Obx(() => AnimatedSlide(
@@ -98,14 +106,30 @@ class _MediaPageState extends State<_MediaPage>
   late final AnimationController _zoomAnimationController;
   Animation<Matrix4>? _zoomAnimation;
   Offset _doubleTapPosition = Offset.zero;
+  bool _useFullResolution = false;
+  late Future<Uint8List> _imageFuture;
+  late Future<String> _videoFuture;
+
+  void _startLoading() {
+    if (widget.media.isVideo) {
+      _videoFuture = widget.controller.prepareVideo(widget.media);
+    } else {
+      _imageFuture = widget.controller.loadMedia(widget.media);
+    }
+  }
 
   @override
   void initState() {
     super.initState();
+    _startLoading();
     _transformController = TransformationController();
     _transformController.addListener(() {
       final scale = _transformController.value.getMaxScaleOnAxis();
-      widget.controller.isZoomed.value = scale > 1.05;
+      final zoomed = scale > 1.05;
+      widget.controller.isZoomed.value = zoomed;
+      if (zoomed != _useFullResolution) {
+        setState(() => _useFullResolution = zoomed);
+      }
     });
     _zoomAnimationController = AnimationController(
       vsync: this,
@@ -116,6 +140,12 @@ class _MediaPageState extends State<_MediaPage>
           _transformController.value = animation.value;
         }
       });
+  }
+
+  @override
+  void didUpdateWidget(covariant _MediaPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.media.id != widget.media.id) _startLoading();
   }
 
   @override
@@ -167,7 +197,7 @@ class _MediaPageState extends State<_MediaPage>
   Widget build(BuildContext context) {
     if (widget.media.isVideo) {
       return FutureBuilder<String>(
-        future: widget.controller.prepareVideo(widget.media),
+        future: _videoFuture,
         builder: (context, snapshot) {
           if (snapshot.hasError) {
             return const Center(
@@ -198,11 +228,24 @@ class _MediaPageState extends State<_MediaPage>
     }
 
     return FutureBuilder<Uint8List>(
-      future: widget.controller.loadMedia(widget.media),
+      future: _imageFuture,
       builder: (context, snapshot) {
-        if (!snapshot.hasData) {
+        if (snapshot.hasError) {
           return const Center(
-            child: CircularProgressIndicator(color: Colors.white54),
+            child: Text('This photo could not be opened.',
+                style: TextStyle(color: Colors.white70)),
+          );
+        }
+        if (!snapshot.hasData) {
+          final thumb = widget.controller.home.thumbCache[widget.media.id];
+          return Stack(
+            fit: StackFit.expand,
+            children: [
+              if (thumb != null) Image.memory(thumb, fit: BoxFit.contain),
+              const Center(
+                child: CircularProgressIndicator(color: Colors.white54),
+              ),
+            ],
           );
         }
         return Hero(
@@ -218,8 +261,11 @@ class _MediaPageState extends State<_MediaPage>
               panEnabled: true,
               onInteractionStart: (_) => _zoomAnimationController.stop(),
               child: Center(
-                child: Image.memory(
-                  snapshot.data!,
+                child: Image(
+                  image: _useFullResolution
+                      ? MemoryImage(snapshot.data!)
+                      : widget.controller
+                          .previewProvider(snapshot.data!, context),
                   fit: BoxFit.contain,
                   gaplessPlayback: true,
                 ),
@@ -421,9 +467,10 @@ class _BottomBar extends StatelessWidget {
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text('Delete media'),
-        content:
-            const Text('This will permanently delete this file. Are you sure?'),
+        title: const Text('Move to Trash?'),
+        content: const Text(
+          'The encrypted file can be restored for 7 days before permanent deletion.',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
@@ -434,7 +481,7 @@ class _BottomBar extends StatelessWidget {
               Navigator.pop(context);
               controller.deleteCurrentMedia();
             },
-            child: Text('Delete',
+            child: Text('Move to Trash',
                 style: TextStyle(color: Theme.of(context).colorScheme.error)),
           ),
         ],

@@ -129,8 +129,6 @@ class _PinDotsState extends State<_PinDots> with SingleTickerProviderStateMixin 
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-
     return AnimatedBuilder(
       animation: _shakeAnimation,
       builder: (context, child) {

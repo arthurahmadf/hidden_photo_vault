@@ -8,10 +8,9 @@
 //   uuid: ^4.5.1
 
 import 'dart:io';
-import 'dart:typed_data';
 
-import 'package:encrypt/encrypt.dart' as aes;
 import 'package:flutter/foundation.dart';
+import 'package:cryptography_flutter/cryptography_flutter.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:hidden_photo_vault/app/data/models/gallery_media_model.dart';
 import 'package:media_kit/media_kit.dart';
@@ -21,26 +20,7 @@ import 'package:uuid/uuid.dart';
 
 import '../../core/services/data_service.dart';
 import '../../core/services/media_picker_service.dart';
-
-class _DecryptParams {
-  final Uint8List bytes;
-  final String key;
-  const _DecryptParams(this.bytes, this.key);
-}
-
-Uint8List _decryptIsolate(_DecryptParams params) {
-  // same AES-CBC logic as _decrypt
-  final aesKey = aes.Key.fromUtf8(_padKey(params.key));
-  final iv = aes.IV(params.bytes.sublist(0, 16));
-  final ciphertext = aes.Encrypted(params.bytes.sublist(16));
-  final encrypter = aes.Encrypter(aes.AES(aesKey, mode: aes.AESMode.cbc));
-  return Uint8List.fromList(encrypter.decryptBytes(ciphertext, iv: iv));
-}
-
-String _padKey(String key) {
-  if (key.length >= 32) return key.substring(0, 32);
-  return key.padRight(32, '0');
-}
+import 'vault_crypto.dart';
 
 class GalleryService {
   static const _uuid = Uuid();
@@ -48,20 +28,22 @@ class GalleryService {
   static const _encExt = '.enc';
   static const _thumbSuffix = '_thumb';
   static const _thumbSize = 350;
-  static const publicKey = 'public'; // hardcoded key for public vault
+  static const publicKey =
+      'public'; // public vault identifier, never an AES key
 
   // ── Public API ──────────────────────────────────────────────────────────────
 
   /// Encrypt and store [file] under [vaultId].
-  /// Use [publicKey] for home images, vault PIN for secret vault images.
+  /// The vault must be unlocked before inserting private media.
   /// Returns true on success.
   Future<bool> insertMedia(
     XFile file,
     MediaType mediaType,
     String vaultId, {
-    String encryptionKey = publicKey,
     String tag = "default",
   }) async {
+    File? fullFile;
+    File? thumbFile;
     try {
       final id = _uuid.v4();
       final dir = await _vaultDirectory();
@@ -92,15 +74,20 @@ class GalleryService {
       }
 
       // Encrypt both
-      final encFull = _encrypt(sourceBytes, encryptionKey);
-      final encThumb = _encrypt(thumbBytes, encryptionKey);
+      final key = await _keyFor(vaultId);
+      final encFull = await VaultCrypto.encrypt(sourceBytes, key,
+          context: 'media:$id:full');
+      final encThumb = await VaultCrypto.encrypt(thumbBytes, key,
+          context: 'media:$id:thumb');
 
       // Write to disk
       final fullPath = p.join(dir.path, '$id$_encExt');
       final thumbPath = p.join(dir.path, '$id$_thumbSuffix$_encExt');
 
-      await File(fullPath).writeAsBytes(encFull, flush: true);
-      await File(thumbPath).writeAsBytes(encThumb, flush: true);
+      fullFile = File(fullPath);
+      thumbFile = File(thumbPath);
+      await fullFile.writeAsBytes(encFull, flush: true);
+      await thumbFile.writeAsBytes(encThumb, flush: true);
 
       // Persist metadata to Hive
       final image = GalleryMedia(
@@ -121,6 +108,10 @@ class GalleryService {
       await DataService.gallery.put(id, image);
       return true;
     } catch (_) {
+      if (fullFile != null && await fullFile.exists()) await fullFile.delete();
+      if (thumbFile != null && await thumbFile.exists()) {
+        await thumbFile.delete();
+      }
       return false;
     }
   }
@@ -148,6 +139,43 @@ class GalleryService {
     }
   }
 
+  /// Soft-delete media while leaving its files encrypted in place.
+  Future<bool> moveToTrash(GalleryMedia media) async {
+    try {
+      await DataService.gallery.update(
+        media.id!,
+        media.copyWith(deletedAt: DateTime.now()),
+      );
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  Future<bool> restoreFromTrash(GalleryMedia media) async {
+    try {
+      await DataService.gallery
+          .update(media.id!, media.copyWith(restore: true));
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  Future<int> purgeExpiredTrash({
+    Duration retention = const Duration(days: 7),
+  }) async {
+    final cutoff = DateTime.now().subtract(retention);
+    final expired = DataService.gallery.where(
+      (item) => item.deletedAt != null && item.deletedAt!.isBefore(cutoff),
+    );
+    var count = 0;
+    for (final item in expired) {
+      if (await deleteMedia(item)) count++;
+    }
+    return count;
+  }
+
   Future<bool> updateTag(GalleryMedia media, String tag) async {
     final updated =
         media.copyWith(tag: tag.trim().isEmpty ? 'default' : tag.trim());
@@ -157,7 +185,9 @@ class GalleryService {
 
   /// Return all images belonging to [vaultId], sorted newest first.
   Future<List<GalleryMedia>> getImages(String vaultId) async {
-    final list = DataService.gallery.where((img) => img.vaultId == vaultId);
+    final list = DataService.gallery.where(
+      (img) => img.vaultId == vaultId && img.deletedAt == null,
+    );
 
     list.sort((a, b) =>
         (b.importedAt ?? DateTime(0)).compareTo(a.importedAt ?? DateTime(0)));
@@ -170,8 +200,8 @@ class GalleryService {
   Future<Uint8List> loadThumb(GalleryMedia media,
       {String encryptionKey = publicKey}) async {
     final encBytes = await File(media.thumbPath!).readAsBytes();
-    return await compute(
-        _decryptIsolate, _DecryptParams(encBytes, encryptionKey));
+    return _decryptMedia(encBytes, media.thumbPath!, media.vaultId!, media.id!,
+        'thumb', encryptionKey);
   }
 
   /// Decrypt and return full image bytes for the viewer.
@@ -179,9 +209,8 @@ class GalleryService {
   Future<Uint8List> loadFull(GalleryMedia media,
       {String encryptionKey = publicKey}) async {
     final encBytes = await File(media.filePath!).readAsBytes();
-    // run decrypt off main thread
-    return await compute(
-        _decryptIsolate, _DecryptParams(encBytes, encryptionKey));
+    return _decryptMedia(encBytes, media.filePath!, media.vaultId!, media.id!,
+        'full', encryptionKey);
   }
 
   // ── Private ─────────────────────────────────────────────────────────────────
@@ -197,33 +226,50 @@ class GalleryService {
     );
   }
 
-  /// AES-CBC encrypt [plainBytes] using [key] padded to 32 bytes.
-  /// Output format: [16B IV][ciphertext]
-  Uint8List _encrypt(Uint8List plainBytes, String key) {
-    final aesKey = aes.Key.fromUtf8(_padKey(key));
-    final iv = aes.IV.fromSecureRandom(16);
-    final encrypter = aes.Encrypter(aes.AES(aesKey, mode: aes.AESMode.cbc));
-    final encrypted = encrypter.encryptBytes(plainBytes, iv: iv);
-
-    final out = BytesBuilder();
-    out.add(iv.bytes);
-    out.add(encrypted.bytes);
-    return out.toBytes();
+  Future<Uint8List> _keyFor(String vaultId) async {
+    if (vaultId == 'public') return VaultCrypto.publicKey();
+    final key = VaultCrypto.unlockedKey(vaultId);
+    if (key == null) throw StateError('Vault is locked');
+    return key;
   }
 
-  /// AES-CBC decrypt [encBytes] (format: [16B IV][ciphertext]) using [key].
-  Uint8List _decrypt(Uint8List encBytes, String key) {
-    final aesKey = aes.Key.fromUtf8(_padKey(key));
-    final iv = aes.IV(encBytes.sublist(0, 16));
-    final ciphertext = aes.Encrypted(encBytes.sublist(16));
-    final encrypter = aes.Encrypter(aes.AES(aesKey, mode: aes.AESMode.cbc));
-    return Uint8List.fromList(encrypter.decryptBytes(ciphertext, iv: iv));
-  }
-
-  /// Pad or truncate [key] to exactly 32 chars (AES-256 needs 32B key).
-  String _padKey(String key) {
-    if (key.length >= 32) return key.substring(0, 32);
-    return key.padRight(32, '0');
+  Future<Uint8List> _decryptMedia(Uint8List bytes, String path, String vaultId,
+      String mediaId, String kind, String pin) async {
+    final context = 'media:$mediaId:$kind';
+    if (VaultCrypto.isModern(bytes)) {
+      final key = await _keyFor(vaultId);
+      if (kind != 'full') {
+        return VaultCrypto.decrypt(bytes, key, context: context);
+      }
+      if (FlutterCryptography.isPluginPresent &&
+          (Platform.isAndroid || Platform.isIOS || Platform.isMacOS)) {
+        return VaultCrypto.decrypt(bytes, key, context: context);
+      }
+      // Full photos and videos can take long enough to stall a swipe when
+      // native AES-GCM is unavailable, so use a worker isolate as a fallback.
+      final workerKey = Uint8List.fromList(key);
+      try {
+        return await compute(
+          _decryptFullMedia,
+          _FullMediaDecryptRequest(bytes, workerKey, context),
+        );
+      } finally {
+        workerKey.fillRange(0, workerKey.length, 0);
+      }
+    }
+    final clear = VaultCrypto.decryptLegacy(bytes, pin);
+    // Upgrade legacy ciphertext only after decryption succeeds. A failed rewrite
+    // leaves the old file intact so it can be retried on the next unlock.
+    try {
+      final key = await _keyFor(vaultId);
+      final upgraded = await VaultCrypto.encrypt(clear, key, context: context);
+      final temporary = File('$path.migrating');
+      await temporary.writeAsBytes(upgraded, flush: true);
+      await temporary.rename(path);
+    } catch (_) {
+      // Reading remains possible if storage is temporarily unwritable.
+    }
+    return clear;
   }
 
   /// 1x1 transparent PNG — placeholder for video thumbnails.
@@ -351,13 +397,23 @@ class GalleryService {
       await player.dispose();
     }
   }
-  // ── Exposed for VaultService (changePin, export, import) ───────────────────
+}
 
-  /// Public wrapper around [_encrypt] — used by VaultService for re-encryption.
-  Uint8List encryptBytes(Uint8List bytes, String key) => _encrypt(bytes, key);
+class _FullMediaDecryptRequest {
+  final Uint8List bytes;
+  final Uint8List key;
+  final String context;
 
-  /// Public wrapper around [_decrypt] — used by VaultService for re-encryption.
-  Uint8List decryptBytes(Uint8List bytes, String key) => _decrypt(bytes, key);
+  _FullMediaDecryptRequest(this.bytes, this.key, this.context);
+}
+
+Future<Uint8List> _decryptFullMedia(_FullMediaDecryptRequest request) async {
+  try {
+    return await VaultCrypto.decrypt(request.bytes, request.key,
+        context: request.context);
+  } finally {
+    request.key.fillRange(0, request.key.length, 0);
+  }
 }
 
 class _VideoInfo {

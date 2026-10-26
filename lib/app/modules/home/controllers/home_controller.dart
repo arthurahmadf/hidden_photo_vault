@@ -8,10 +8,13 @@ import 'package:hidden_photo_vault/app/core/helpers/dialog_helper.dart';
 import 'package:hidden_photo_vault/app/core/helpers/logger_helper.dart';
 import 'package:hidden_photo_vault/app/core/services/data_service.dart';
 import 'package:hidden_photo_vault/app/core/services/dialog_service.dart';
+import 'package:hidden_photo_vault/app/core/services/privacy_service.dart';
+import 'package:hidden_photo_vault/app/core/services/sensitive_cache_service.dart';
 import 'package:hidden_photo_vault/app/data/models/app_setting_model.dart';
 import 'package:hidden_photo_vault/app/data/models/gallery_media_model.dart';
 import 'package:hidden_photo_vault/app/data/models/vault_model.dart';
 import 'package:hidden_photo_vault/app/data/services/gallery_service.dart';
+import 'package:hidden_photo_vault/app/data/services/vault_crypto.dart';
 import 'package:hidden_photo_vault/app/modules/media_viewer/arguments/view_media_argument.dart';
 import 'package:hidden_photo_vault/app/routes/app_pages.dart';
 
@@ -23,7 +26,6 @@ class HomeController extends GetxController with WidgetsBindingObserver {
   final galleryLoadState = LoadState.LOADING.obs;
   final images = <GalleryMedia>[].obs;
   final thumbCache = <String, Uint8List>{}.obs;
-  final _vaultWasClosed = false.obs;
   final selectedVault = Vault(id: "public").obs;
   String? selectedVaultPin;
   final isGrouped = false.obs;
@@ -52,14 +54,21 @@ class HomeController extends GetxController with WidgetsBindingObserver {
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.paused) {
-      if (isBusy) return;
-      closeVault();
+    // Camera and file pickers can pause the app; keep the current vault open.
+    if (state == AppLifecycleState.inactive ||
+        state == AppLifecycleState.hidden ||
+        state == AppLifecycleState.paused ||
+        state == AppLifecycleState.detached) {
+      thumbCache.clear();
+      unawaited(
+        SensitiveCacheService.clearPlaintextTemporaryFiles(
+          includeActiveShares: false,
+        ),
+      );
     } else if (state == AppLifecycleState.resumed) {
       isBusy = false;
-      if (_vaultWasClosed.value) {
-        LoggerHelper.info("Vault Closed on Background/Paused State");
-        _vaultWasClosed.value = false;
+      if (images.isNotEmpty) {
+        unawaited(buildThumbnailCache());
       }
     }
   }
@@ -77,15 +86,22 @@ class HomeController extends GetxController with WidgetsBindingObserver {
     ]);
   }
 
+  List<GalleryMedia> get visibleMediaOrder => isGrouped.value
+      ? groupedImages.values.expand((items) => items).toList(growable: false)
+      : images.toList(growable: false);
+
   Future<void> buildThumbnailCache() async {
     LoggerHelper.info(
-        "building cache | vaultId: ${selectedVault.value.id} | encKey: $activeEncKey");
+        "building encrypted thumbnail cache | vaultId: ${selectedVault.value.id}");
     for (final img in images) {
       if (thumbCache.containsKey(img.id)) continue;
-
-      final bytes =
-          await gs.loadThumb(img, encryptionKey: selectedVaultPin ?? "public");
-      thumbCache[img.id!] = bytes;
+      try {
+        final bytes = await gs.loadThumb(img,
+            encryptionKey: selectedVaultPin ?? "public");
+        thumbCache[img.id!] = bytes;
+      } catch (_) {
+        // A missing or unauthenticated thumbnail must not hide other media.
+      }
     }
     update();
   }
@@ -132,19 +148,34 @@ class HomeController extends GetxController with WidgetsBindingObserver {
 
   void closeVault() async {
     if (selectedVault.value.id == "public") return;
+    final closingVaultId = selectedVault.value.id!;
+    thumbCache.clear();
+    if (Get.currentRoute != Routes.HOME) {
+      Get.until((route) => route.settings.name == Routes.HOME);
+    }
     selectedVault.value = Vault(id: "public");
     selectedVaultPin = null;
+    VaultCrypto.lock(closingVaultId);
+    await PrivacyService.setPrivateVaultOpen(false);
     getImages();
-    _vaultWasClosed.value = true;
     update();
   }
 
-  void onMediaTapped(GalleryMedia mediaMeta, int index) async {
-    if (!mediaMeta.isVideo) {
-      unawaited(gs.loadFull(mediaMeta, encryptionKey: activeEncKey));
-    }
+  void onMediaTapped(GalleryMedia mediaMeta) async {
+    final mediaIds = visibleMediaOrder
+        .map((media) => media.id)
+        .whereType<String>()
+        .toList(growable: false);
+    final tappedMediaId = mediaMeta.id;
+    if (tappedMediaId == null) return;
+    final initialIndex = mediaIds.indexOf(tappedMediaId);
+    if (initialIndex < 0) return;
+
     Get.toNamed(Routes.MEDIA_VIEWER,
-        arguments: ViewMediaArgument(initialIndex: index));
+        arguments: ViewMediaArgument(
+          initialIndex: initialIndex,
+          mediaIds: mediaIds,
+        ));
   }
 
   Future<void> onBackPressed(bool didPop, BuildContext context) async {

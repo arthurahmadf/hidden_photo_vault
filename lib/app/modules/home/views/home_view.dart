@@ -65,7 +65,7 @@ class HomeView extends GetView<HomeController> {
               //             ),
               //             8.horizontalSpace,
               //             Text(
-              //               isPrivate ? controller.selectedVault.value.name ?? "mY Gallery (P)" : "mY Gallery",
+              //               isPrivate ? controller.selectedVault.value.name ?? "Vistash (P)" : "Vistash",
               //               style: AppFonts.bold18.copyWith(color: AppColors.background),
               //             ),
               //             const Spacer(),
@@ -173,7 +173,6 @@ class _FlatGrid extends StatelessWidget {
             final media = controller.images[index];
             return _GridTile(
               media: media,
-              globalIndex: index,
               controller: controller,
             );
           },
@@ -271,10 +270,8 @@ class _TagSection extends StatelessWidget {
               itemCount: mediaList.length,
               itemBuilder: (context, index) {
                 final media = mediaList[index];
-                final globalIndex = controller.images.indexOf(media);
                 return _GridTile(
                   media: media,
-                  globalIndex: globalIndex,
                   controller: controller,
                 );
               },
@@ -292,12 +289,10 @@ class _TagSection extends StatelessWidget {
 
 class _GridTile extends StatelessWidget {
   final GalleryMedia media;
-  final int globalIndex;
   final HomeController controller;
 
   const _GridTile({
     required this.media,
-    required this.globalIndex,
     required this.controller,
   });
 
@@ -311,7 +306,7 @@ class _GridTile extends StatelessWidget {
       );
     }
     return GestureDetector(
-      onTap: () => controller.onMediaTapped(media, globalIndex),
+      onTap: () => controller.onMediaTapped(media),
       child: Hero(
         tag: "media_${media.id}",
         child: ClipRRect(

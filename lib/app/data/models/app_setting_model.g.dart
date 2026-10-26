@@ -20,19 +20,22 @@ class AppSettingAdapter extends TypeAdapter<AppSetting> {
       gridItemCount: fields[0] as int?,
       preferTaggedView: fields[1] as bool,
       exportDir: fields[2] as String,
+      lastBackupAt: fields[3] as DateTime?,
     );
   }
 
   @override
   void write(BinaryWriter writer, AppSetting obj) {
     writer
-      ..writeByte(3)
+      ..writeByte(4)
       ..writeByte(0)
       ..write(obj.gridItemCount)
       ..writeByte(1)
       ..write(obj.preferTaggedView)
       ..writeByte(2)
-      ..write(obj.exportDir);
+      ..write(obj.exportDir)
+      ..writeByte(3)
+      ..write(obj.lastBackupAt);
   }
 
   @override

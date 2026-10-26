@@ -91,8 +91,8 @@ class _HomeAppBarState extends State<HomeAppBar> with SingleTickerProviderStateM
                   onTap: controller.getImages,
                   child: Obx(() => Text(
                         controller.selectedVault.value.id != 'public'
-                            ? controller.selectedVault.value.name ?? 'mY Gallery'
-                            : 'mY Gallery',
+                            ? controller.selectedVault.value.name ?? 'Vistash'
+                            : 'Vistash',
                         style: AppFonts.bold18.copyWith(
                           color: AppColors.textPrimary,
                           letterSpacing: -0.3,

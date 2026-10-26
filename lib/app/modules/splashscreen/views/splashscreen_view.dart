@@ -20,7 +20,7 @@ class SplashscreenView extends GetView<SplashscreenController> {
             Image.asset(AppIcons.app_logo),
             12.verticalSpace,
             Text(
-              "mY Gallery",
+              "Vistash",
               style: AppFonts.bold18,
             )
           ],

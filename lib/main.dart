@@ -34,7 +34,7 @@ void main() async {
         return FlavorBanner(
           flavor: flavor.name,
           child: GetMaterialApp(
-            title: "mY Gallery",
+            title: "Vistash",
             initialRoute: AppPages.INITIAL,
             locale: const Locale('id', 'ID'),
             fallbackLocale: const Locale('id', 'ID'),

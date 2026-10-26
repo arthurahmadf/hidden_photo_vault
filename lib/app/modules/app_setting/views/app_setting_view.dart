@@ -5,6 +5,7 @@ import 'package:hidden_photo_vault/app/core/style/app_colors.dart';
 import 'package:hidden_photo_vault/app/core/style/app_fonts.dart';
 
 import '../controllers/app_setting_controller.dart';
+import 'vault_health_view.dart';
 
 class AppSettingView extends GetView<AppSettingController> {
   const AppSettingView({super.key});
@@ -17,10 +18,12 @@ class AppSettingView extends GetView<AppSettingController> {
         backgroundColor: AppColors.secondary,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.appBarTitle, size: 18.w),
+          icon: Icon(Icons.arrow_back_ios_new_rounded,
+              color: AppColors.appBarTitle, size: 18.w),
           onPressed: Get.back,
         ),
-        title: Text('Settings', style: AppFonts.bold18.copyWith(color: AppColors.appBarTitle)),
+        title: Text('Settings',
+            style: AppFonts.bold18.copyWith(color: AppColors.appBarTitle)),
       ),
       body: Obx(() => ListView(
             padding: EdgeInsets.symmetric(vertical: 16.w),
@@ -37,12 +40,15 @@ class AppSettingView extends GetView<AppSettingController> {
                   icon: Icons.pin_outlined,
                   title: 'Change PIN',
                   subtitle: 'Update your vault PIN',
-                  onTap: controller.isChangingPin.value ? null : controller.onChangePinTapped,
+                  onTap: controller.isChangingPin.value
+                      ? null
+                      : controller.onChangePinTapped,
                   trailing: controller.isChangingPin.value
                       ? SizedBox(
                           width: 20.w,
                           height: 20.w,
-                          child: const CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary),
+                          child: const CircularProgressIndicator(
+                              strokeWidth: 2, color: AppColors.primary),
                         )
                       : null,
                 ),
@@ -52,12 +58,15 @@ class AppSettingView extends GetView<AppSettingController> {
                   icon: Icons.upload_outlined,
                   title: 'Export Vault',
                   subtitle: 'Save vault as .hpv file to Downloads',
-                  onTap: controller.isExporting.value ? null : controller.onExportTapped,
+                  onTap: controller.isExporting.value
+                      ? null
+                      : controller.onExportTapped,
                   trailing: controller.isExporting.value
                       ? SizedBox(
                           width: 20.w,
                           height: 20.w,
-                          child: const CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary),
+                          child: const CircularProgressIndicator(
+                              strokeWidth: 2, color: AppColors.primary),
                         )
                       : null,
                 ),
@@ -67,12 +76,15 @@ class AppSettingView extends GetView<AppSettingController> {
                   icon: Icons.share_outlined,
                   title: 'Export and Share Vault',
                   subtitle: 'Share .hpv via Drive, WhatsApp, etc.',
-                  onTap: controller.isExporting.value ? null : controller.onShareVaultTapped,
+                  onTap: controller.isExporting.value
+                      ? null
+                      : controller.onShareVaultTapped,
                   trailing: controller.isExporting.value
                       ? SizedBox(
                           width: 20.w,
                           height: 20.w,
-                          child: const CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary),
+                          child: const CircularProgressIndicator(
+                              strokeWidth: 2, color: AppColors.primary),
                         )
                       : null,
                 ),
@@ -83,12 +95,15 @@ class AppSettingView extends GetView<AppSettingController> {
                 icon: Icons.download_outlined,
                 title: 'Import Vault',
                 subtitle: 'Restore a .hpv backup file',
-                onTap: controller.isImporting.value ? null : controller.onImportTapped,
+                onTap: controller.isImporting.value
+                    ? null
+                    : controller.onImportTapped,
                 trailing: controller.isImporting.value
                     ? SizedBox(
                         width: 20.w,
                         height: 20.w,
-                        child: const CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary),
+                        child: const CircularProgressIndicator(
+                            strokeWidth: 2, color: AppColors.primary),
                       )
                     : null,
               ),
@@ -99,7 +114,8 @@ class AppSettingView extends GetView<AppSettingController> {
               Obx(() {
                 final current = controller.setting.value.gridItemCount;
                 return Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.w),
+                  padding:
+                      EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.w),
                   child: Row(
                     children: [
                       Container(
@@ -108,14 +124,17 @@ class AppSettingView extends GetView<AppSettingController> {
                           color: AppColors.primary.withOpacity(0.08),
                           borderRadius: BorderRadius.circular(8.r),
                         ),
-                        child: Icon(Icons.grid_view_rounded, size: 18.w, color: AppColors.iconPrimary),
+                        child: Icon(Icons.grid_view_rounded,
+                            size: 18.w, color: AppColors.iconPrimary),
                       ),
                       12.horizontalSpace,
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text('Grid Columns', style: AppFonts.bold14.copyWith(color: AppColors.textPrimary)),
+                            Text('Grid Columns',
+                                style: AppFonts.bold14
+                                    .copyWith(color: AppColors.textPrimary)),
                             2.verticalSpace,
                             Text('$current columns',
                                 style: AppFonts.medium14.copyWith(
@@ -129,28 +148,38 @@ class AppSettingView extends GetView<AppSettingController> {
                       Row(
                         children: [
                           GestureDetector(
-                            onTap: current! > 2 ? () => controller.updateGridCount(current - 1) : null,
+                            onTap: current! > 2
+                                ? () => controller.updateGridCount(current - 1)
+                                : null,
                             child: Container(
                               padding: EdgeInsets.all(6.w),
                               decoration: BoxDecoration(
-                                color: AppColors.primary.withOpacity(current > 2 ? 0.08 : 0.03),
+                                color: AppColors.primary
+                                    .withOpacity(current > 2 ? 0.08 : 0.03),
                                 borderRadius: BorderRadius.circular(6.r),
                               ),
                               child: Icon(Icons.remove,
-                                  size: 16.w, color: AppColors.iconPrimary.withOpacity(current > 2 ? 1 : 0.2)),
+                                  size: 16.w,
+                                  color: AppColors.iconPrimary
+                                      .withOpacity(current > 2 ? 1 : 0.2)),
                             ),
                           ),
                           12.horizontalSpace,
                           GestureDetector(
-                            onTap: current < 6 ? () => controller.updateGridCount(current + 1) : null,
+                            onTap: current < 6
+                                ? () => controller.updateGridCount(current + 1)
+                                : null,
                             child: Container(
                               padding: EdgeInsets.all(6.w),
                               decoration: BoxDecoration(
-                                color: AppColors.primary.withOpacity(current < 6 ? 0.08 : 0.03),
+                                color: AppColors.primary
+                                    .withOpacity(current < 6 ? 0.08 : 0.03),
                                 borderRadius: BorderRadius.circular(6.r),
                               ),
                               child: Icon(Icons.add,
-                                  size: 16.w, color: AppColors.iconPrimary.withOpacity(current < 6 ? 1 : 0.2)),
+                                  size: 16.w,
+                                  color: AppColors.iconPrimary
+                                      .withOpacity(current < 6 ? 1 : 0.2)),
                             ),
                           ),
                         ],
@@ -162,7 +191,8 @@ class AppSettingView extends GetView<AppSettingController> {
 
               // Tagged view toggle
               Obx(() => Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.w),
+                    padding:
+                        EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.w),
                     child: Row(
                       children: [
                         Container(
@@ -171,18 +201,22 @@ class AppSettingView extends GetView<AppSettingController> {
                             color: AppColors.primary.withOpacity(0.08),
                             borderRadius: BorderRadius.circular(8.r),
                           ),
-                          child: Icon(Icons.label_rounded, size: 18.w, color: AppColors.iconPrimary),
+                          child: Icon(Icons.label_rounded,
+                              size: 18.w, color: AppColors.iconPrimary),
                         ),
                         12.horizontalSpace,
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text('Group by Tag', style: AppFonts.bold14.copyWith(color: AppColors.textPrimary)),
+                              Text('Group by Tag',
+                                  style: AppFonts.bold14
+                                      .copyWith(color: AppColors.textPrimary)),
                               2.verticalSpace,
                               Text('Show images grouped by tag',
                                   style: AppFonts.medium14.copyWith(
-                                    color: AppColors.textPrimary.withOpacity(0.5),
+                                    color:
+                                        AppColors.textPrimary.withOpacity(0.5),
                                     fontSize: 12,
                                   )),
                             ],
@@ -199,6 +233,13 @@ class AppSettingView extends GetView<AppSettingController> {
 
               // Export directory
               _ExportDirTile(controller: controller),
+              const _SectionHeader(title: 'Privacy & Recovery'),
+              _SettingsTile(
+                icon: Icons.health_and_safety_outlined,
+                title: 'Vault Health',
+                subtitle: 'Storage, backups, Trash, and cleanup',
+                onTap: () => Get.to(() => const VaultHealthView()),
+              ),
               // ── App section ─────────────────────────────────────────────────
               const _SectionHeader(title: 'App'),
 
@@ -232,7 +273,8 @@ class _ExportDirTile extends StatelessWidget {
                 color: AppColors.primary.withOpacity(0.08),
                 borderRadius: BorderRadius.circular(8.r),
               ),
-              child: Icon(Icons.folder_outlined, size: 18.w, color: AppColors.iconPrimary),
+              child: Icon(Icons.folder_outlined,
+                  size: 18.w, color: AppColors.iconPrimary),
             ),
             12.horizontalSpace,
             Expanded(
@@ -241,7 +283,9 @@ class _ExportDirTile extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Export Directory', style: AppFonts.bold14.copyWith(color: AppColors.primary)),
+                    Text('Export Directory',
+                        style:
+                            AppFonts.bold14.copyWith(color: AppColors.primary)),
                     2.verticalSpace,
                     Row(
                       children: [
@@ -256,7 +300,9 @@ class _ExportDirTile extends StatelessWidget {
                           ),
                         ),
                         4.horizontalSpace,
-                        Icon(Icons.edit_outlined, size: 12.w, color: AppColors.secondary.withOpacity(0.3)),
+                        Icon(Icons.edit_outlined,
+                            size: 12.w,
+                            color: AppColors.secondary.withOpacity(0.3)),
                       ],
                     ),
                   ],
@@ -277,11 +323,19 @@ class _ExportDirTile extends StatelessWidget {
         title: const Text('Export Directory'),
         content: TextField(
           controller: tc,
-          decoration: const InputDecoration(hintText: '/storage/emulated/0/Download'),
-          style: const TextStyle(fontSize: 13),
+          cursorColor: AppColors.primary,
+          style: AppFonts.medium14.copyWith(color: AppColors.textPrimary),
+          decoration: InputDecoration(
+            hintText: '/storage/emulated/0/Download',
+            hintStyle: AppFonts.medium14.copyWith(
+              color: AppColors.textDisabled,
+            ),
+          ),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+          TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel')),
           TextButton(
             onPressed: () {
               controller.updateExportDir(tc.text);
@@ -312,10 +366,11 @@ class _RenameVaultTile extends StatelessWidget {
           Container(
             padding: EdgeInsets.all(8.w),
             decoration: BoxDecoration(
-              color: AppColors.secondary.withOpacity(0.08),
+              color: AppColors.primary.withOpacity(0.08),
               borderRadius: BorderRadius.circular(8.r),
             ),
-            child: Icon(Icons.drive_file_rename_outline_rounded, size: 18.w, color: AppColors.secondary),
+            child: Icon(Icons.drive_file_rename_outline_rounded,
+                size: 18.w, color: AppColors.iconPrimary),
           ),
           12.horizontalSpace,
           Expanded(
@@ -325,21 +380,25 @@ class _RenameVaultTile extends StatelessWidget {
                     child: TextField(
                       controller: controller.renameTextController,
                       autofocus: true,
+                      cursorColor: AppColors.primary,
                       onSubmitted: (_) => controller.saveVaultName(),
                       onTapOutside: (_) => controller.saveVaultName(),
-                      style: AppFonts.bold14.copyWith(color: AppColors.secondary),
+                      style: AppFonts.bold14
+                          .copyWith(color: AppColors.textPrimary),
                       decoration: InputDecoration(
                         isDense: true,
-                        contentPadding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 6.w),
+                        contentPadding: EdgeInsets.symmetric(
+                            horizontal: 8.w, vertical: 6.w),
                         filled: true,
-                        fillColor: AppColors.secondary.withOpacity(0.08),
+                        fillColor: AppColors.surfaceHigh,
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8.r),
                           borderSide: BorderSide.none,
                         ),
                         suffixIcon: GestureDetector(
                           onTap: controller.saveVaultName,
-                          child: Icon(Icons.check_rounded, color: AppColors.primary, size: 18.w),
+                          child: Icon(Icons.check_rounded,
+                              color: AppColors.primary, size: 18.w),
                         ),
                       ),
                     ),
@@ -349,22 +408,26 @@ class _RenameVaultTile extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Vault Name', style: AppFonts.bold14.copyWith(color: AppColors.secondary)),
+                        Text('Vault Name',
+                            style: AppFonts.bold14
+                                .copyWith(color: AppColors.primary)),
                         2.verticalSpace,
                         Row(
                           children: [
                             Expanded(
                               child: Text(
-                                controller.home.selectedVault.value.name ?? 'Unnamed',
+                                controller.home.selectedVault.value.name ??
+                                    'Unnamed',
                                 style: AppFonts.medium14.copyWith(
-                                  color: AppColors.secondary.withOpacity(0.5),
+                                  color: AppColors.primary.withOpacity(0.5),
                                   fontSize: 12,
                                 ),
                                 overflow: TextOverflow.ellipsis,
                               ),
                             ),
                             4.horizontalSpace,
-                            Icon(Icons.edit_outlined, size: 12.w, color: AppColors.secondary.withOpacity(0.3)),
+                            Icon(Icons.edit_outlined,
+                                size: 12.w, color: AppColors.iconPrimary),
                           ],
                         ),
                       ],
@@ -444,7 +507,9 @@ class _SettingsTile extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(title, style: AppFonts.bold14.copyWith(color: AppColors.primary)),
+                    Text(title,
+                        style:
+                            AppFonts.bold14.copyWith(color: AppColors.primary)),
                     2.verticalSpace,
                     Text(
                       subtitle,
@@ -457,7 +522,8 @@ class _SettingsTile extends StatelessWidget {
                 ),
               ),
               trailing ??
-                  Icon(Icons.chevron_right_rounded, size: 20.w, color: AppColors.iconPrimary.withOpacity(1)),
+                  Icon(Icons.chevron_right_rounded,
+                      size: 20.w, color: AppColors.iconPrimary.withOpacity(1)),
             ],
           ),
         ),

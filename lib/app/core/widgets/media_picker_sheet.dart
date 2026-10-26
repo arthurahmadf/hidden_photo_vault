@@ -187,6 +187,7 @@ class _UrlInputState extends State<_UrlInput> {
 
   Future<void> _autoPaste() async {
     final data = await Clipboard.getData(Clipboard.kTextPlain);
+    if (!mounted) return;
     final text = data?.text ?? '';
     if (text.startsWith('http://') || text.startsWith('https://')) {
       setState(() {
@@ -194,6 +195,13 @@ class _UrlInputState extends State<_UrlInput> {
         _errorText = null; // Clear error on new paste
       });
     }
+  }
+
+  void _clearUrl() {
+    setState(() {
+      _tc.clear();
+      _errorText = null;
+    });
   }
 
   final _progress = ValueNotifier<double>(0);
@@ -356,11 +364,16 @@ class _UrlInputState extends State<_UrlInput> {
                   : Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        // paste button
+                        // Paste when empty; clear the URL once it is present.
                         IconButton(
-                          icon: Icon(Icons.content_paste_rounded,
-                              color: AppColors.onSurfaceMuted, size: 18.w),
-                          onPressed: _autoPaste,
+                          tooltip: _tc.text.isEmpty ? 'Paste URL' : 'Clear URL',
+                          icon: Icon(
+                              _tc.text.isEmpty
+                                  ? Icons.content_paste_rounded
+                                  : Icons.delete_outline_rounded,
+                              color: AppColors.onSurfaceMuted,
+                              size: 18.w),
+                          onPressed: _tc.text.isEmpty ? _autoPaste : _clearUrl,
                         ),
                         // submit button — only show when text is not empty
                         if (_tc.text.isNotEmpty)

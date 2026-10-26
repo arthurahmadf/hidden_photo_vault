@@ -85,7 +85,8 @@ class AppSettingController extends GetxController {
     final success = await vs.renameVault(home.selectedVault.value, newName);
     if (success) {
       // Update reactive vault in HomeController
-      home.selectedVault.value = home.selectedVault.value.copyWith(name: newName);
+      home.selectedVault.value =
+          home.selectedVault.value.copyWith(name: newName);
       home.selectedVault.refresh();
       _showSnack('Renamed', 'Vault renamed to "$newName".');
       home.update();
@@ -110,7 +111,8 @@ class AppSettingController extends GetxController {
   Future<void> _doChangePin(String oldPin, String newPin) async {
     isChangingPin.value = true;
     try {
-      final success = await vs.changePin(home.selectedVault.value, oldPin, newPin);
+      final success =
+          await vs.changePin(home.selectedVault.value, oldPin, newPin);
       if (success) {
         // Update session PIN so future decryption uses new key
         home.selectedVaultPin = newPin;
@@ -140,16 +142,20 @@ class AppSettingController extends GetxController {
       // Generate .hpv file
       final hpvFile = await vs.exportVault(vault, pin);
       if (hpvFile == null) {
-        _showSnack('Export failed', 'Could not generate export file.', isError: true);
+        _showSnack('Export failed', 'Could not generate export file.',
+            isError: true);
         return;
       }
 
       // Save to Downloads
       final saved = await _saveToDownloads(hpvFile);
       if (saved != null) {
-        _showSnack('Export successful', 'Saved to Downloads: ${saved.path.split('/').last}');
+        _recordSuccessfulBackup();
+        _showSnack('Export successful',
+            'Saved to Downloads: ${saved.path.split('/').last}');
       } else {
-        _showSnack('Export failed', 'Could not save to Downloads.', isError: true);
+        _showSnack('Export failed', 'Could not save to Downloads.',
+            isError: true);
       }
     } catch (e) {
       _showSnack('Export failed', e.toString(), isError: true);
@@ -172,13 +178,15 @@ class AppSettingController extends GetxController {
     try {
       final hpvFile = await vs.exportVault(vault, pin);
       if (hpvFile == null) {
-        _showSnack('Export failed', 'Could not generate export file.', isError: true);
+        _showSnack('Export failed', 'Could not generate export file.',
+            isError: true);
         return;
       }
       await Share.shareXFiles(
         [XFile(hpvFile.path)],
         subject: '${vault.name} vault backup',
       );
+      _recordSuccessfulBackup();
     } catch (e) {
       _showSnack('Export failed', e.toString(), isError: true);
     } finally {
@@ -188,11 +196,18 @@ class AppSettingController extends GetxController {
 
   // ── Save to Download ──────────────────────────────────────────────────────────────────
 
+  void _recordSuccessfulBackup() {
+    setting.value = setting.value.copyWith(lastBackupAt: DateTime.now());
+    DataService.setting.data = setting.value;
+  }
+
   Future<File?> _saveToDownloads(File hpvFile) async {
     try {
       const downloadsPath = '/storage/emulated/0/Download';
       final downloadsDir = Directory(downloadsPath);
-      if (!await downloadsDir.exists()) await downloadsDir.create(recursive: true);
+      if (!await downloadsDir.exists()) {
+        await downloadsDir.create(recursive: true);
+      }
 
       final fileName = hpvFile.path.split('/').last;
       final dest = File('$downloadsPath/$fileName');
@@ -241,7 +256,8 @@ class AppSettingController extends GetxController {
     try {
       final vault = await vs.importVault(hpvFile, pin);
       if (vault == null) {
-        _showSnack('Import failed', 'Wrong PIN or corrupted file.', isError: true);
+        _showSnack('Import failed', 'Wrong PIN or corrupted file.',
+            isError: true);
         return;
       }
       // Refresh home if the imported vault matches current active vault
@@ -373,8 +389,11 @@ class _ChangePinSheetState extends State<_ChangePinSheet> {
                 ),
                 8.verticalSpace,
                 Text(
-                  isOldStep ? 'Enter your current PIN to continue' : 'Enter your new 6-digit PIN',
-                  style: AppFonts.medium14.copyWith(color: AppColors.secondary.withOpacity(0.5)),
+                  isOldStep
+                      ? 'Enter your current PIN to continue'
+                      : 'Enter your new 6-digit PIN',
+                  style: AppFonts.medium14
+                      .copyWith(color: AppColors.secondary.withOpacity(0.5)),
                   textAlign: TextAlign.center,
                 ),
               ],
@@ -409,7 +428,9 @@ class _ChangePinSheetState extends State<_ChangePinSheet> {
                   shape: BoxShape.circle,
                   color: filled ? AppColors.primary : Colors.transparent,
                   border: Border.all(
-                    color: filled ? AppColors.primary : AppColors.secondary.withOpacity(0.3),
+                    color: filled
+                        ? AppColors.primary
+                        : AppColors.secondary.withOpacity(0.3),
                     width: 2,
                   ),
                 ),
@@ -423,7 +444,8 @@ class _ChangePinSheetState extends State<_ChangePinSheet> {
           if (_loading)
             SizedBox(
               height: 200.w,
-              child: const Center(child: CircularProgressIndicator(color: AppColors.primary)),
+              child: const Center(
+                  child: CircularProgressIndicator(color: AppColors.primary)),
             )
           else
             _buildNumpad(),
@@ -479,7 +501,9 @@ class _ChangePinSheetState extends State<_ChangePinSheet> {
         borderRadius: BorderRadius.circular(16.r),
         child: SizedBox(
           height: 56.w,
-          child: Center(child: Text(label, style: AppFonts.bold18.copyWith(color: AppColors.secondary))),
+          child: Center(
+              child: Text(label,
+                  style: AppFonts.bold18.copyWith(color: AppColors.secondary))),
         ),
       ),
     );
@@ -494,7 +518,8 @@ class _ChangePinSheetState extends State<_ChangePinSheet> {
         borderRadius: BorderRadius.circular(16.r),
         child: SizedBox(
           height: 56.w,
-          child: Center(child: Icon(icon, size: 20.w, color: AppColors.secondary)),
+          child:
+              Center(child: Icon(icon, size: 20.w, color: AppColors.secondary)),
         ),
       ),
     );
@@ -514,7 +539,9 @@ class _StepPill extends StatelessWidget {
       width: active ? 24.w : 8.w,
       height: 8.w,
       decoration: BoxDecoration(
-        color: done || active ? AppColors.primary : AppColors.secondary.withOpacity(0.2),
+        color: done || active
+            ? AppColors.primary
+            : AppColors.secondary.withOpacity(0.2),
         borderRadius: BorderRadius.circular(4.r),
       ),
     );
@@ -582,13 +609,16 @@ class _ImportPinSheetState extends State<_ImportPinSheet> {
           ),
           24.verticalSpace,
 
-          Icon(Icons.lock_outline_rounded, size: 40.w, color: AppColors.primary),
+          Icon(Icons.lock_outline_rounded,
+              size: 40.w, color: AppColors.primary),
           16.verticalSpace,
-          Text('Enter Vault PIN', style: AppFonts.bold18.copyWith(color: AppColors.secondary)),
+          Text('Enter Vault PIN',
+              style: AppFonts.bold18.copyWith(color: AppColors.secondary)),
           8.verticalSpace,
           Text(
             'Enter the PIN used to encrypt this vault',
-            style: AppFonts.medium14.copyWith(color: AppColors.secondary.withOpacity(0.5)),
+            style: AppFonts.medium14
+                .copyWith(color: AppColors.secondary.withOpacity(0.5)),
             textAlign: TextAlign.center,
           ),
           32.verticalSpace,
@@ -607,7 +637,9 @@ class _ImportPinSheetState extends State<_ImportPinSheet> {
                   shape: BoxShape.circle,
                   color: filled ? AppColors.primary : Colors.transparent,
                   border: Border.all(
-                    color: filled ? AppColors.primary : AppColors.secondary.withOpacity(0.3),
+                    color: filled
+                        ? AppColors.primary
+                        : AppColors.secondary.withOpacity(0.3),
                     width: 2,
                   ),
                 ),

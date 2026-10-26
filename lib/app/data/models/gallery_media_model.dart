@@ -8,7 +8,8 @@ import 'package:hive_flutter/hive_flutter.dart';
 
 part 'gallery_media_model.g.dart';
 
-GalleryMedia galleryImageFromJson(String str) => GalleryMedia.fromJson(json.decode(str));
+GalleryMedia galleryImageFromJson(String str) =>
+    GalleryMedia.fromJson(json.decode(str));
 
 String galleryImageToJson(GalleryMedia data) => json.encode(data.toJson());
 
@@ -38,6 +39,8 @@ class GalleryMedia {
   int? width;
   @HiveField(11)
   int? height;
+  @HiveField(12)
+  DateTime? deletedAt;
 
   GalleryMedia({
     this.id,
@@ -52,6 +55,7 @@ class GalleryMedia {
     this.durationMs,
     this.width,
     this.height,
+    this.deletedAt,
   });
 
   bool get isVideo => mimeType?.toLowerCase().startsWith('video/') ?? false;
@@ -71,6 +75,8 @@ class GalleryMedia {
     int? durationMs,
     int? width,
     int? height,
+    DateTime? deletedAt,
+    bool restore = false,
   }) =>
       GalleryMedia(
         id: id ?? this.id,
@@ -85,6 +91,7 @@ class GalleryMedia {
         durationMs: durationMs ?? this.durationMs,
         width: width ?? this.width,
         height: height ?? this.height,
+        deletedAt: restore ? null : deletedAt ?? this.deletedAt,
       );
 
   factory GalleryMedia.fromJson(Map<String, dynamic> json) => GalleryMedia(
@@ -94,12 +101,17 @@ class GalleryMedia {
         originalName: json["originalName"],
         mimeType: json["mimeType"],
         fileSize: json["fileSize"],
-        importedAt: json["importedAt"] == null ? null : DateTime.parse(json["importedAt"]),
+        importedAt: json["importedAt"] == null
+            ? null
+            : DateTime.parse(json["importedAt"]),
         vaultId: json["vaultId"],
         tag: json["tag"],
         durationMs: json["durationMs"],
         width: json["width"],
         height: json["height"],
+        deletedAt: json["deletedAt"] == null
+            ? null
+            : DateTime.parse(json["deletedAt"]),
       );
 
   Map<String, dynamic> toJson() => {
@@ -115,5 +127,6 @@ class GalleryMedia {
         "durationMs": durationMs,
         "width": width,
         "height": height,
+        "deletedAt": deletedAt?.toIso8601String(),
       };
 }

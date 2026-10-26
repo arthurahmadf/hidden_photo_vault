@@ -11,10 +11,14 @@ import '../style/app_fonts.dart';
 import 'app_surface_widget.dart';
 
 // Default styling variables for easy modification
-EdgeInsets defaultPadding = EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.w);
-final TextStyle defaultLabelStyle = AppFonts.regular13;
-final TextStyle defaultTextStyle = AppFonts.regular13.copyWith(color: Colors.black);
-final TextStyle defaultHintStyle = AppFonts.regular13.copyWith(color: AppColors.textSecondary);
+EdgeInsets defaultPadding =
+    EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.w);
+final TextStyle defaultLabelStyle =
+    AppFonts.regular13.copyWith(color: AppColors.textSecondary);
+final TextStyle defaultTextStyle =
+    AppFonts.regular13.copyWith(color: AppColors.textPrimary);
+final TextStyle defaultHintStyle =
+    AppFonts.regular13.copyWith(color: AppColors.textSecondary);
 
 InputDecoration appInputDecoration({
   String? hintText,
@@ -63,11 +67,15 @@ InputDecoration appInputDecoration({
     prefixIconColor: AppColors.iconPrimary,
     prefixIconConstraints: BoxConstraints(minHeight: 15.w, minWidth: 15.w),
     border: OutlineInputBorder(
-      borderSide: useBorder ? const BorderSide(color: AppColors.border) : BorderSide.none,
+      borderSide: useBorder
+          ? const BorderSide(color: AppColors.border)
+          : BorderSide.none,
       borderRadius: BorderRadius.circular(8.r),
     ),
     enabledBorder: OutlineInputBorder(
-      borderSide: useBorder ? const BorderSide(color: AppColors.border) : BorderSide.none,
+      borderSide: useBorder
+          ? const BorderSide(color: AppColors.border)
+          : BorderSide.none,
       borderRadius: BorderRadius.circular(8.r),
     ),
     focusedBorder: OutlineInputBorder(
@@ -75,7 +83,9 @@ InputDecoration appInputDecoration({
       borderRadius: BorderRadius.circular(8.r),
     ),
     disabledBorder: OutlineInputBorder(
-      borderSide: useBorder ? const BorderSide(color: AppColors.textDisabled) : BorderSide.none,
+      borderSide: useBorder
+          ? const BorderSide(color: AppColors.textDisabled)
+          : BorderSide.none,
       borderRadius: BorderRadius.circular(8.r),
     ),
     errorBorder: OutlineInputBorder(
@@ -208,6 +218,7 @@ class AppTextField extends StatelessWidget {
           children: [
             TextFormField(
               controller: controller,
+              cursorColor: AppColors.primary,
               keyboardType: keyboardType,
               inputFormatters: inputFormatters,
               readOnly: readOnly,
@@ -257,7 +268,8 @@ class AppTextField extends StatelessWidget {
                       tip!,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
-                      style: AppFonts.medium10.copyWith(color: AppColors.primary),
+                      style:
+                          AppFonts.medium10.copyWith(color: AppColors.primary),
                     ),
                   )
                 ],
@@ -307,7 +319,8 @@ class AppDropdown<T> extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(6.r)),
+      decoration: BoxDecoration(
+          color: Colors.white, borderRadius: BorderRadius.circular(6.r)),
       width: 1.sw,
       child: DropdownButtonFormField<T>(
         value: value,

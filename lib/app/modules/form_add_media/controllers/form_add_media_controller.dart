@@ -20,12 +20,10 @@ class FormAddMediaController extends GetxController {
     DialogService.showLoading(dismissible: false);
     LoggerHelper.info("vaultId: ${homeController.selectedVault.value.id}");
     try {
-      var key = homeController.selectedVaultPin ?? "public";
       var isSuccess = await gs.insertMedia(
         file!,
         mediaType ?? MediaType.image,
         homeController.selectedVault.value.id ?? "public",
-        encryptionKey: key,
         tag: tagTextController.text.trim().isNotEmpty
             ? tagTextController.text.trim()
             : "default",

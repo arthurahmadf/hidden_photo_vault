@@ -29,13 +29,14 @@ class GalleryMediaAdapter extends TypeAdapter<GalleryMedia> {
       durationMs: fields[9] as int?,
       width: fields[10] as int?,
       height: fields[11] as int?,
+      deletedAt: fields[12] as DateTime?,
     );
   }
 
   @override
   void write(BinaryWriter writer, GalleryMedia obj) {
     writer
-      ..writeByte(12)
+      ..writeByte(13)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -59,7 +60,9 @@ class GalleryMediaAdapter extends TypeAdapter<GalleryMedia> {
       ..writeByte(10)
       ..write(obj.width)
       ..writeByte(11)
-      ..write(obj.height);
+      ..write(obj.height)
+      ..writeByte(12)
+      ..write(obj.deletedAt);
   }
 
   @override

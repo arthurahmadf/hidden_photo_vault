@@ -8,6 +8,7 @@ import 'package:hidden_photo_vault/app/data/models/gallery_media_model.dart';
 import 'package:hidden_photo_vault/app/data/services/gallery_service.dart';
 import 'package:hidden_photo_vault/app/modules/home/controllers/home_controller.dart';
 import 'package:hidden_photo_vault/app/modules/media_viewer/arguments/view_media_argument.dart';
+import 'package:hidden_photo_vault/app/core/services/sensitive_cache_service.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
@@ -23,10 +24,17 @@ class MediaViewerController extends GetxController {
   final isEditingTag = false.obs;
   late final TextEditingController tagTextController;
   final isZoomed = false.obs;
-  int preloadValue = 3;
+  late final List<String> _mediaIds;
 
-  // Cache: id → decrypted full bytes
+  static const _maxCachedBytes = 64 * 1024 * 1024;
+  static const _maxCachedPhotos = 4;
+  // The insertion order is the least recently used order.
   final _cache = <String, Uint8List>{};
+  final _inFlight = <String, Future<Uint8List>>{};
+  final _decoding = <String, Future<void>>{};
+  int _cachedBytes = 0;
+  int _cacheGeneration = 0;
+  bool _initialWarmStarted = false;
   final _videoFiles = <String, Future<File>>{};
   final _playbackSessionName =
       'session_${DateTime.now().microsecondsSinceEpoch}';
@@ -35,17 +43,14 @@ class MediaViewerController extends GetxController {
   void onInit() {
     super.onInit();
     final args = Get.arguments as ViewMediaArgument;
-    currentIndex.value = args.initialIndex;
-    pageController = PageController(initialPage: args.initialIndex);
+    _mediaIds = List<String>.of(args.mediaIds);
+    final initialMediaId = _mediaIds[args.initialIndex];
+    final resolvedInitialIndex =
+        mediaList.indexWhere((media) => media.id == initialMediaId);
+    currentIndex.value = resolvedInitialIndex < 0 ? 0 : resolvedInitialIndex;
+    pageController = PageController(initialPage: currentIndex.value);
     tagTextController = TextEditingController();
     unawaited(_removeStalePlaybackFiles());
-
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      for (int i = 1; i <= preloadValue; i++) {
-        unawaited(_preload(currentIndex.value - i));
-        unawaited(_preload(currentIndex.value + i));
-      }
-    });
 
     // Hide status bar for immersive view
     // SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
@@ -53,27 +58,97 @@ class MediaViewerController extends GetxController {
 
   @override
   void onClose() {
+    clearSensitiveCache();
     pageController.dispose();
     tagTextController.dispose();
-    _cache.clear();
     unawaited(_deletePlaybackSession());
     // Restore system UI on exit
     // SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
     super.onClose();
   }
 
+  void clearSensitiveCache() {
+    _cacheGeneration++;
+    _cache.clear();
+    _cachedBytes = 0;
+    _inFlight.clear();
+    _decoding.clear();
+    PaintingBinding.instance.imageCache
+      ..clear()
+      ..clearLiveImages();
+    unawaited(_deletePlaybackSession());
+    unawaited(
+      SensitiveCacheService.clearPlaintextTemporaryFiles(
+        includeActiveShares: !home.isBusy,
+      ),
+    );
+  }
+
   // ── Data helpers ─────────────────────────────────────────────────────────
 
-  List<GalleryMedia> get mediaList => home.images;
+  List<GalleryMedia> get mediaList {
+    final mediaById = <String, GalleryMedia>{
+      for (final media in home.images)
+        if (media.id != null) media.id!: media,
+    };
+    return _mediaIds
+        .map((id) => mediaById[id])
+        .whereType<GalleryMedia>()
+        .toList(growable: false);
+  }
+
   GalleryMedia get current => mediaList[currentIndex.value];
 
   String get _encKey => home.selectedVaultPin ?? GalleryService.publicKey;
 
-  Future<Uint8List> loadMedia(GalleryMedia media) async {
-    if (_cache.containsKey(media.id)) return _cache[media.id]!;
-    final bytes = await home.gs.loadFull(media, encryptionKey: _encKey);
-    _cache[media.id!] = bytes;
-    return bytes;
+  ImageProvider previewProvider(Uint8List bytes, BuildContext context) {
+    final size = MediaQuery.sizeOf(context);
+    final ratio = MediaQuery.devicePixelRatioOf(context);
+    return ResizeImage(
+      MemoryImage(bytes),
+      width: (size.width * ratio).ceil().clamp(1, 8192),
+      height: (size.height * ratio).ceil().clamp(1, 8192),
+      policy: ResizeImagePolicy.fit,
+    );
+  }
+
+  void warmInitial(BuildContext context) {
+    if (_initialWarmStarted) return;
+    _initialWarmStarted = true;
+    unawaited(_preloadAround(currentIndex.value, context, 1));
+  }
+
+  Future<Uint8List> loadMedia(GalleryMedia media) {
+    final id = media.id!;
+    final cached = _cache.remove(id);
+    if (cached != null) {
+      _cache[id] = cached;
+      return Future.value(cached);
+    }
+    final pending = _inFlight[id];
+    if (pending != null) return pending;
+
+    final generation = _cacheGeneration;
+    late final Future<Uint8List> request;
+    request = home.gs.loadFull(media, encryptionKey: _encKey).then((bytes) {
+      if (isClosed || generation != _cacheGeneration) {
+        throw StateError('Viewer session has ended');
+      }
+      if (bytes.lengthInBytes <= _maxCachedBytes) {
+        _cache[id] = bytes;
+        _cachedBytes += bytes.lengthInBytes;
+        while (_cache.length > _maxCachedPhotos ||
+            _cachedBytes > _maxCachedBytes) {
+          final oldest = _cache.keys.first;
+          _cachedBytes -= _cache.remove(oldest)!.lengthInBytes;
+        }
+      }
+      return bytes;
+    }).whenComplete(() {
+      if (identical(_inFlight[id], request)) _inFlight.remove(id);
+    });
+    _inFlight[id] = request;
+    return request;
   }
 
   Future<String> prepareVideo(GalleryMedia media) async {
@@ -119,22 +194,52 @@ class MediaViewerController extends GetxController {
     await home.refreshImages();
   }
 
-  void onPageChanged(int index) {
+  void onPageChanged(int index, BuildContext context) {
+    final direction = index >= currentIndex.value ? 1 : -1;
     currentIndex.value = index;
-    // Preload adjacent images
-    for (int i = 1; i <= preloadValue; i++) {
-      unawaited(_preload(index - i));
-      unawaited(_preload(index + i));
-    }
+    unawaited(_preloadAround(index, context, direction));
   }
 
-  Future<void> _preload(int index) async {
-    if (index < 0 || index >= mediaList.length) return;
-    final media = mediaList[index];
+  Future<void> _preloadAround(
+      int index, BuildContext context, int direction) async {
+    final items = mediaList;
+    if (index < 0 || index >= items.length) return;
+    // Start the visible page first, then warm both sides and one page ahead.
+    await Future.wait([
+      _preload(index, context),
+      _preload(index + direction, context),
+      _preload(index - direction, context),
+      _preload(index + direction * 2, context),
+    ]);
+  }
+
+  Future<void> _preload(int index, BuildContext context) async {
+    final items = mediaList;
+    if (index < 0 || index >= items.length || isClosed || !context.mounted) {
+      return;
+    }
+    final media = items[index];
     if (media.isVideo) return;
-    if (_cache.containsKey(media.id)) return;
-    final bytes = await home.gs.loadFull(media, encryptionKey: _encKey);
-    _cache[media.id!] = bytes;
+    try {
+      final bytes = await loadMedia(media);
+      if (isClosed || !context.mounted) return;
+      final provider = previewProvider(bytes, context);
+      final id = media.id!;
+      final generation = _cacheGeneration;
+      final existing = _decoding[id];
+      if (existing != null) return existing;
+      late final Future<void> decoding;
+      decoding = precacheImage(provider, context).whenComplete(() async {
+        if (isClosed || generation != _cacheGeneration) {
+          await provider.evict();
+        }
+        if (identical(_decoding[id], decoding)) _decoding.remove(id);
+      });
+      _decoding[id] = decoding;
+      await decoding;
+    } catch (_) {
+      // Prefetch failures are handled when the user opens that page.
+    }
   }
 
   Future<void> deleteCurrentMedia() async {
@@ -144,15 +249,16 @@ class MediaViewerController extends GetxController {
     final indexToDelete = currentIndex.value;
     final mediaToDelete = mediaList[indexToDelete];
 
-    final success = await home.gs.deleteMedia(mediaToDelete);
+    final success = await home.gs.moveToTrash(mediaToDelete);
     if (!success) {
       isDeleting.value = false;
-      Get.snackbar('Error', 'Failed to delete media.');
+      Get.snackbar('Error', 'Failed to move media to Trash.');
       return;
     }
 
     // Remove from cache
-    _cache.remove(mediaToDelete.id);
+    final cached = _cache.remove(mediaToDelete.id);
+    if (cached != null) _cachedBytes -= cached.lengthInBytes;
     await _deletePreparedVideo(mediaToDelete.id);
 
     // Notify HomeController to refresh its list
@@ -162,6 +268,7 @@ class MediaViewerController extends GetxController {
     if (mediaList.isEmpty) {
       isDeleting.value = false;
       Get.back();
+      _showTrashUndo(mediaToDelete);
       return;
     }
 
@@ -175,6 +282,25 @@ class MediaViewerController extends GetxController {
 
     currentIndex.value = newIndex;
     isDeleting.value = false;
+
+    _showTrashUndo(mediaToDelete);
+  }
+
+  void _showTrashUndo(GalleryMedia media) {
+    Get.snackbar(
+      'Moved to Trash',
+      'This item will be deleted permanently after 7 days.',
+      snackPosition: SnackPosition.BOTTOM,
+      duration: const Duration(seconds: 5),
+      mainButton: TextButton(
+        onPressed: () async {
+          await home.gs.restoreFromTrash(media);
+          await home.refreshImages();
+          Get.closeCurrentSnackbar();
+        },
+        child: const Text('UNDO'),
+      ),
+    );
   }
 
   Future<void> shareCurrentMedia() async {
@@ -184,19 +310,22 @@ class MediaViewerController extends GetxController {
 
       // write to temp cache, share, cleanup after
       final cacheDir = await getTemporaryDirectory();
-      final fileName = p.basename(media.originalName ?? '${media.id}.jpg');
-      final tempFile = File(p.join(cacheDir.path, fileName));
+      final shareDir =
+          Directory(p.join(cacheDir.path, 'hidden_photo_vault_share'));
+      await shareDir.create(recursive: true);
+      final fileName = p.windows
+          .basename(p.posix.basename(media.originalName ?? '${media.id}.jpg'));
+      final tempFile = File(p.join(shareDir.path, fileName));
       await tempFile.writeAsBytes(plainBytes, flush: true);
       home.isBusy = true;
       await Share.shareXFiles(
         [XFile(tempFile.path, mimeType: media.mimeType ?? 'image/jpeg')],
       );
 
-      // cleanup after share sheet closes
-      Future.delayed(const Duration(seconds: 30), () async {
-        if (await tempFile.exists()) await tempFile.delete();
-      });
+      if (await tempFile.exists()) await tempFile.delete();
+      home.isBusy = false;
     } catch (e) {
+      home.isBusy = false;
       Get.snackbar(
         'Error',
         'Could not share file.',
@@ -216,7 +345,7 @@ class MediaViewerController extends GetxController {
       final dir = Directory(downloadsPath);
       if (!await dir.exists()) await dir.create(recursive: true);
 
-      final fileName = media.originalName ?? '${media.id}.jpg';
+      final fileName = p.basename(media.originalName ?? '${media.id}.jpg');
       final dest = File('$downloadsPath/$fileName');
       await dest.writeAsBytes(plainBytes, flush: true);
 

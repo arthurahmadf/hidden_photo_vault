@@ -30,6 +30,9 @@ class AppTheme {
       filled: true,
       fillColor: AppColors.surfaceHigh,
       hintStyle: AppFonts.regular14.copyWith(color: AppColors.onSurfaceMuted),
+      labelStyle: AppFonts.regular14.copyWith(color: AppColors.onSurface),
+      floatingLabelStyle:
+          AppFonts.regular14.copyWith(color: AppColors.onBackground),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(8),
         borderSide: BorderSide.none,

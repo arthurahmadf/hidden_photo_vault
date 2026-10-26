@@ -1,4 +1,9 @@
 class ViewMediaArgument {
   final int initialIndex;
-  const ViewMediaArgument({required this.initialIndex});
+  final List<String> mediaIds;
+
+  const ViewMediaArgument({
+    required this.initialIndex,
+    required this.mediaIds,
+  });
 }

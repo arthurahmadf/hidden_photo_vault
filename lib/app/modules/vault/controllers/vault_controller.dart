@@ -1,6 +1,7 @@
 import 'package:get/get.dart';
 import 'package:hidden_photo_vault/app/data/services/vault_service.dart';
 import 'package:hidden_photo_vault/app/modules/home/controllers/home_controller.dart';
+import 'package:hidden_photo_vault/app/core/services/privacy_service.dart';
 import 'package:uuid/uuid.dart';
 
 class VaultController extends GetxController {
@@ -26,18 +27,30 @@ class VaultController extends GetxController {
   }
 
   void onPinSubmit(String pin) async {
-    final vault = vs.findVaultByPin(pin);
-    if (vault != null) {
-      home.selectedVault.value = vault;
-      home.selectedVaultPin = pin;
-      home.update();
-      Get.back(result: true);
-    } else {
-      var newVault = await vs.createVault(pin, 'Vault ${_uuid.v4().substring(0, 6)}');
-      home.selectedVault.value = newVault;
-      home.selectedVaultPin = pin;
-      home.update();
-      Get.back(result: true);
+    if (isLoading.value) return;
+    isLoading.value = true;
+    try {
+      final vault = await vs.findVaultByPin(pin);
+      if (vault != null) {
+        home.selectedVault.value = vault;
+        home.selectedVaultPin = pin;
+        await PrivacyService.setPrivateVaultOpen(true);
+        home.update();
+        Get.back(result: true);
+      } else {
+        var newVault =
+            await vs.createVault(pin, 'Vault ${_uuid.v4().substring(0, 6)}');
+        home.selectedVault.value = newVault;
+        home.selectedVaultPin = pin;
+        await PrivacyService.setPrivateVaultOpen(true);
+        home.update();
+        Get.back(result: true);
+      }
+    } catch (_) {
+      shakeNotifier.value++;
+      this.pin.value = '';
+    } finally {
+      isLoading.value = false;
     }
   }
 }
